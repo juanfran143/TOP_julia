@@ -40,15 +40,16 @@ function modify_value_lognormal(mean::Float64, variance::Float64)
     return rand(lognormal_dist)
 end
 
-function simulation(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulations::Int8, capacity::Int8, routes::Route[])
+function simulation(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulations::Int, capacity::Float64, routes::Array{Route,1})
     avg_reward = []
     for _ in 1:num_simulations
         reward_route = []
         for route in routes
             dist = 0
-            first_node = route[1]
-            for next_node in route[1:end]
-                dist += modify_value_lognormal(edge_dist(edges, first_node.id, next_node.id))
+            first_node = route.route[1]
+            for next_node in route.route[2:end]
+                dist += modify_value_lognormal(edge_dist(edges, first_node.id, next_node.id), 0.2)
+                first_node = next_node
             end
 
             reward = route.reward
@@ -59,6 +60,8 @@ function simulation(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulations::Int
         end
         push!(avg_reward, sum(reward_route))
     end
+
+    return mean(avg_reward)
 end
 
 
@@ -148,9 +151,9 @@ function get_reward_and_route(sorted_routes::Dict{Int64, Route}, n_vehicles::Int
     return (reward, routes)
 end
 
-function heuristic_with_BR(n_vehicles, nodes, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, alpha, beta)
+function heuristic_with_BR(n_vehicles, nodes, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, alpha, beta, savings)
     routes = dummy_solution(nodes, edges, capacity)
-    savings = calculate_savings_dict(nodes, edges, alpha)
+    
     savings = reorder_saving_list(savings, beta)
     for key in keys(savings)
         NodeX = nodes[key[1]]
@@ -161,6 +164,13 @@ function heuristic_with_BR(n_vehicles, nodes, edges::Dict{Int8, Dict{Int8, Float
     sorted_routes = Dict(kv[1] => kv[2] for kv in sorted_routes)
 
     return get_reward_and_route(sorted_routes, n_vehicles)
+end
+
+function create_dic_to_rl(nodes)
+    depot = nodes[1]
+    end_point = nodes[end]
+    rl = Dict{Vect{Int8}, Float64}
+
 end
 
 function main()
@@ -180,14 +190,18 @@ function main()
         end
     end
 
-
+    savings = calculate_savings_dict(nodes, edges, alpha)
     best_reward = 0
     best_route = Route[]
 
     reward = 0
     route = Route[]
     for _ in 1:100
-        reward, route = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta)
+        reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings)
+        
+        avg_reg = simulation(edges, 100, capacity, routes)
+        println(avg_reg, " ", [route.reward for route in routes])
+
         if reward > best_reward
             best_reward = reward
             best_route = copy(route)
