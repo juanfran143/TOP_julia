@@ -1,5 +1,5 @@
-using Random, Distributions
-
+using Random, Distributions, Combinatorics
+#using Combinatorics
 mutable struct Node
     id:: Int8
     x::Float64
@@ -28,9 +28,6 @@ end
 function distance(NodeX::Node, NodeY::Node)
     return sqrt((NodeX.x-NodeY.x)^2+(NodeX.y-NodeY.y)^2)
 end
-
-
-
 
 
 function modify_value_lognormal(mean::Float64, variance::Float64)
@@ -166,11 +163,35 @@ function heuristic_with_BR(n_vehicles, nodes, edges::Dict{Int8, Dict{Int8, Float
     return get_reward_and_route(sorted_routes, n_vehicles)
 end
 
-function create_dic_to_rl(nodes)
-    depot = nodes[1]
-    end_point = nodes[end]
-    rl = Dict{Vect{Int8}, Float64}
+function create_dic_to_rl(nodes::Dict{Int64, Node}, max_distance::Float64, start_node, end_node)
+    routes = Dict{Vector{Int64}, Float64}()
+    intermediate_nodes = [key for key in keys(nodes) if key != start_node && key != end_node] # nodes that are not depots
 
+    # Generate all permutations of length 1 to n for the intermediate nodes
+    for n in 1:length(intermediate_nodes)
+        for perm in permutations(intermediate_nodes, n)
+            route = vcat([start_node], perm, [end_node])  # add depots to the start and end
+            total_distance = sum(distance(nodes[route[i]], nodes[route[i+1]]) for i in 1:length(route)-1)
+            if total_distance <= max_distance
+                reward = sum(nodes[node].reward for node in route)
+                routes[route] = reward
+            end
+        end
+    end
+
+    return routes
+end
+
+
+function precalculate_distances(nodes::Dict{Int64, Node})
+    edges = Dict{Int64, Dict{Int64, Float64}}()
+    for i in keys(nodes)
+        edges[i] = Dict{Int64, Float64}() 
+        for j in keys(nodes)
+            edges[i][j] = distance(nodes[i], nodes[j])
+        end
+    end
+    return edges
 end
 
 function main()
@@ -182,13 +203,10 @@ function main()
                               2 => Node(2, 5.0, 6.0, 8.0, 0), 3 => Node(3, 2.0, 2.0, 4.0, 0), 1 => Node(1, 0.0, 0.0, 0.0, 0))
 
 
-    edges = Dict{Int8, Dict{Int8, Float64}}()
-    for i in 1:length(nodes)
-        edges[i] = Dict{Int8, Float64}()  # Inicializa el diccionario interno antes de asignar valores
-        for j in i:length(nodes)
-            edges[i][j] = distance(nodes[i], nodes[j])
-        end
-    end
+    edges = precalculate_distances(nodes::Dict{Int64, Node})
+
+    all_routes = create_dic_to_rl(nodes, capacity, 1, 5)
+    println(all_routes)
 
     savings = calculate_savings_dict(nodes, edges, alpha)
     best_reward = 0
@@ -200,7 +218,7 @@ function main()
         reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings)
         
         avg_reg = simulation(edges, 100, capacity, routes)
-        println(avg_reg, " ", [route.reward for route in routes])
+        #println(avg_reg, " ", [route.reward for route in routes])
 
         if reward > best_reward
             best_reward = reward
