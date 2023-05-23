@@ -199,13 +199,16 @@ function main()
     capacity = 15.0
     alpha = Float16(0.7)
     beta = Float16(0.7)
+    start_node = 1
+    end_node = 5
+    
     nodes = Dict{Int64, Node}(5 => Node(5, 10.0, 10.0, 0.0, 0), 4 => Node(4, 5.0, 3.0, 8.0, 0), 
                               2 => Node(2, 5.0, 6.0, 8.0, 0), 3 => Node(3, 2.0, 2.0, 4.0, 0), 1 => Node(1, 0.0, 0.0, 0.0, 0))
 
 
     edges = precalculate_distances(nodes::Dict{Int64, Node})
 
-    all_routes = create_dic_to_rl(nodes, capacity, 1, 5)
+    all_routes = create_dic_to_rl(nodes, capacity, start_node, end_node)
     println(all_routes)
 
     savings = calculate_savings_dict(nodes, edges, alpha)

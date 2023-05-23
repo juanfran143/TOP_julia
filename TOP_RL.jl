@@ -29,6 +29,25 @@ function distance(NodeX::Node, NodeY::Node)
     return sqrt((NodeX.x-NodeY.x)^2+(NodeX.y-NodeY.y)^2)
 end
 
+function parse_txt(file_path::String)
+    open(file_path, "r") do file
+        lines = readlines(file)
+
+        n_nodes = parse(Int, split(lines[1])[2])
+        n_vehicles = parse(Int, split(lines[2])[2])
+        capacity = parse(Float64, split(lines[3])[2])
+
+        nodes = Dict{Int64, Node}()
+        for i in 4:length(lines)
+            line = split(lines[i])
+            x, y, reward = parse(Float64, line[1]), parse(Float64, line[2]), parse(Float64, line[3])
+            node_id = i - 3
+            nodes[node_id] = Node(node_id, x, y, reward, 0)
+        end
+        
+        return n_vehicles, capacity, nodes
+    end
+end
 
 function modify_value_lognormal(mean::Float64, variance::Float64)
     mu = log(mean^2 / sqrt(mean^2 + variance))
@@ -113,7 +132,7 @@ function calculate_savings_dict(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{I
 
     for i in 2:n-1
         for j in 2:n-1
-            if i != j && nodes[i].route_id != 0 && nodes[j].route_id != 0
+            if i != j
                 saving = edge_dist(edges, depot.id, nodes[j].id) + edge_dist(edges, nodes[i].id, nodes[length(nodes)].id) - edge_dist(edges, nodes[i].id, nodes[j].id)
                 savings_dict[(i, j)] = saving*alpha+(1-alpha)*(nodes[i].reward+nodes[j].reward)
             end
@@ -264,27 +283,29 @@ function precalculate_distances(nodes::Dict{Int64, Node})
 end
 
 function main()
-    n_vehicles = 2
-    capacity = 15.0
     alpha = Float16(0.7)
     beta = Float16(0.7)
+
+    #return n_nodes, n_vehicles, capacity, nodes
+    n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_64_234/p6.2.a.txt")
     start_node = 1
-    end_node = 5
-    
+    end_node = length(nodes)
+    """
     nodes = Dict{Int64, Node}(5 => Node(5, 10.0, 10.0, 0.0, 0), 4 => Node(4, 5.0, 3.0, 8.0, 0), 
                               2 => Node(2, 5.0, 6.0, 8.0, 0), 3 => Node(3, 2.0, 2.0, 4.0, 0), 1 => Node(1, 0.0, 0.0, 0.0, 0))
-
+    """
 
     edges = precalculate_distances(nodes::Dict{Int64, Node})
 
-    all_routes = create_dic_to_rl(nodes, capacity, start_node, end_node)
-    println(all_routes)
+    #all_routes = create_dic_to_rl(nodes, capacity, start_node, end_node)
+    #println(all_routes)
 
     savings = calculate_savings_dict(nodes, edges, alpha)
     best_reward = 0
     best_route = Route[]
 
-    for _ in 1:100
+    for iter in 1:100
+        print(iter)
         reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings)
         
         avg_reg = simulation(edges, 100, capacity, routes)
@@ -300,3 +321,4 @@ function main()
 end
 
 main()
+#parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_64_234/p6.2.a.txt")
