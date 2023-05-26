@@ -82,9 +82,8 @@ end
 
 
 
-function dummy_solution(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{Int8, Float64}}, capacity)
+function dummy_solution(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, last_node)
     routes = Dict{Int, Route}()
-    last_node = length(nodes)
     for (id, node) in pairs(nodes)
         if id == 1 || id == last_node  # Ignora el primer y el último nodo
             continue
@@ -244,8 +243,8 @@ function get_reward_and_route(sorted_routes::Dict{Int64, Route}, n_vehicles::Int
     return (reward, routes)
 end
 
-function heuristic_with_BR(n_vehicles, nodes, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, alpha, beta, savings, rl_dic::Dict{Array{Int64,1}, Array{Float64,1}})
-    routes = dummy_solution(nodes, edges, capacity)
+function heuristic_with_BR(n_vehicles, nodes, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, alpha, beta, savings, rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, last_node::Int64)
+    routes = dummy_solution(nodes, edges, capacity, last_node)
     savings = reorder_saving_list(savings, beta)
     for key in keys(savings)
         if haskey(nodes, key[1]) && haskey(nodes, key[2])
@@ -305,13 +304,15 @@ function main()
                               2 => Node(2, 5.0, 6.0, 8.0, 0), 3 => Node(3, 2.0, 2.0, 4.0, 0), 1 => Node(1, 0.0, 0.0, 0.0, 0))
     """
     edges = precalculate_distances(nodes::Dict{Int64, Node})
-    savings = calculate_savings_dict(nodes, edges, alpha)
+    original_savings = calculate_savings_dict(nodes, edges, alpha)
     best_reward = 0
     best_route = Route[]
+    last_node = length(nodes)
     rl_dic = Dict{Array{Int64,1}, Array{Float64,1}}()
     for iter in 1:100
         print(iter)
-        reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings, rl_dic)
+        savings = copy(original_savings)
+        reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings, rl_dic, last_node)
         
         #avg_reg = simulation(edges, 100, capacity, routes)
         #println(avg_reg, " ", [route.reward for route in routes])
