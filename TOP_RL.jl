@@ -167,7 +167,6 @@ function update_dict(edges::Dict{Int8, Dict{Int8, Float64}}, max_distance::Float
     #   - Reward medio
     #   - Número de simulaciones ejecutadas
     #   - % de fallo de la ruta (reliability)
-    run_simulation = true
     n_simulations_completed = 0
     n_fails = 0
     avg_reward = 0
@@ -175,11 +174,11 @@ function update_dict(edges::Dict{Int8, Dict{Int8, Float64}}, max_distance::Float
     # Meter como parámetro: Número de simulaciones que hagamos cada vez que ejecutaremos (num_simulations) y número máximo de simulaciones para
     # no simular mas (max_simulations)
     num_simulations = 10
-    max_simulations = 30
+    max_simulations = 300
 
     if haskey(rl_dic, new_route)
         if rl_dic[new_route][2] >= max_simulations
-            run_simulation = false
+            return rl_dic[new_route]
         else
             n_simulations_completed = rl_dic[new_route][2]
             n_fails = rl_dic[new_route][3]
@@ -187,12 +186,10 @@ function update_dict(edges::Dict{Int8, Dict{Int8, Float64}}, max_distance::Float
         end
     end
 
-    if run_simulation
-        reward, fails = simulation_dict(edges, num_simulations, max_distance, new_route, route_reward)
-        reward_input = (avg_reward*n_simulations_completed+reward*num_simulations)/(num_simulations+n_simulations_completed)
-        fails_input = (n_fails*n_simulations_completed+fails*num_simulations)/(num_simulations+n_simulations_completed)
-        rl_dic[new_route] = [reward_input, num_simulations+n_simulations_completed, fails_input]
-    end
+    reward, fails = simulation_dict(edges, num_simulations, max_distance, new_route, route_reward)
+    reward_input = (avg_reward*n_simulations_completed+reward*num_simulations)/(num_simulations+n_simulations_completed)
+    fails_input = (n_fails*n_simulations_completed+fails*num_simulations)/(num_simulations+n_simulations_completed)
+    return [reward_input, num_simulations+n_simulations_completed, fails_input]
     
 end
 
@@ -316,12 +313,14 @@ function main()
         
         #avg_reg = simulation(edges, 100, capacity, routes)
         #println(avg_reg, " ", [route.reward for route in routes])
-
+        println("\n")
+        println(rl_dic)
         if reward > best_reward
             best_reward = reward
             best_route = copy(routes)
         end
     end
+    
 
     println("Best routes: ", best_route)
 end
