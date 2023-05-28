@@ -131,32 +131,36 @@ function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Flo
     if Node1.route_id != Node2.route_id && route1.route[end-1].id == Node1.id && route2.route[2].id == Node2.id
         # Fusionar las rutas excluyendo el nodo final de la primera ruta y el nodo de inicio de la segunda ruta
         merged_route_nodes = vcat(route1.route[1:end-1], route2.route[2:end])
+        new_route = [i.id for i in merged_route_nodes]
 
-        # Calcular la distancia y la recompensa total de la nueva ruta fusionada
+        # Aprendizaje en el merge: Si es una mierda, entonces no las juntamos
+        if rl_dic[new_route][2] >= 300 && rl_dic[new_route][3] >=0.4
+            # Calcular la distancia y la recompensa total de la nueva ruta fusionada
 
-        # 1-2-3-5 (route1)
-        # 1-4-5 (route2)
-        # S_34 => 1-2-3-4-5  
-        # Calcular distancia:
-        # 1.- edges(1, 2) +  edges(2, 3) + .... edges(4, 5)
-        # 2.- route1.distance + route2.distance - edges(3, 5) - edges(1, 4) + edges(3, 4) 1-2-3//5 1//4-5    3-4 
-        merged_route_distance = route1.dist + route2.dist - edge_dist(edges, route1.route[end-1].id, route1.route[end].id) - edge_dist(edges, route2.route[1].id, route2.route[2].id) + edge_dist(edges, Node1.id, Node2.id)
+            # 1-2-3-5 (route1)
+            # 1-4-5 (route2)
+            # S_34 => 1-2-3-4-5  
+            # Calcular distancia:
+            # 1.- edges(1, 2) +  edges(2, 3) + .... edges(4, 5)
+            # 2.- route1.distance + route2.distance - edges(3, 5) - edges(1, 4) + edges(3, 4) 1-2-3//5 1//4-5    3-4 
+            merged_route_distance = route1.dist + route2.dist - edge_dist(edges, route1.route[end-1].id, route1.route[end].id) - edge_dist(edges, route2.route[1].id, route2.route[2].id) + edge_dist(edges, Node1.id, Node2.id)
 
-       
-        # Verificar si la distancia total de la nueva ruta fusionada está dentro del límite de distancia máximo
-        if merged_route_distance <= max_distance
-            merged_route_reward = route1.reward + route2.reward
-            routes[Node1.route_id] = Route(merged_route_nodes, merged_route_distance, merged_route_reward)
+        
+            # Verificar si la distancia total de la nueva ruta fusionada está dentro del límite de distancia máximo
+            if merged_route_distance <= max_distance
+                merged_route_reward = route1.reward + route2.reward
+                routes[Node1.route_id] = Route(merged_route_nodes, merged_route_distance, merged_route_reward)
+                
+                original_route_id = Node2.route_id
+                for r in routes[original_route_id].route
+                    r.route_id = Node1.route_id
+                end
+                delete!(routes, original_route_id)
+
+                #Algoritmo Juanfran y Antonio contienen el siguiente cacho de código en común
             
-            original_route_id = Node2.route_id
-            for r in routes[original_route_id].route
-                r.route_id = Node1.route_id
+                rl_dic[new_route] = update_dict(edges, max_distance, rl_dic, new_route, merged_route_reward)
             end
-            delete!(routes, original_route_id)
-
-            #Algoritmo Juanfran y Antonio contienen el siguiente cacho de código en común
-            new_route = [i.id for i in merged_route_nodes]
-            rl_dic[new_route] = update_dict(edges, max_distance, rl_dic, new_route, merged_route_reward)
         end
     end
 end
@@ -311,8 +315,6 @@ function main()
         savings = copy(original_savings)
         reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings, rl_dic, last_node)
         
-        #avg_reg = simulation(edges, 100, capacity, routes)
-        #println(avg_reg, " ", [route.reward for route in routes])
         println("\n")
         println(rl_dic)
         if reward > best_reward
@@ -321,9 +323,7 @@ function main()
         end
     end
     
-
     println("Best routes: ", best_route)
 end
 
 main()
-#parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_64_234/p6.2.a.txt")
