@@ -1,4 +1,5 @@
-using Random, Distributions, Combinatorics
+using Random, Distributions, Combinatorics, DataStructures
+
 #using Combinatorics
 mutable struct Node
     id:: Int8
@@ -228,7 +229,7 @@ function simulation_dict(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulations
 end
 
 function reorder_saving_list(savings::Dict{Tuple{Int, Int}, Float64}, beta::Float16)
-    aux = Dict{Tuple{Int, Int}, Float64}()
+    aux = OrderedDict{Tuple{Int, Int}, Float64}()
     keys_list = collect(keys(savings))
     while !isempty(savings)
         position = Int(floor((log(rand()) / log(1 - beta))) % length(savings)) + 1
@@ -303,7 +304,7 @@ function main()
     beta = Float16(0.7)
 
     #return n_nodes, n_vehicles, capacity, nodes
-    n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_64_234/p6.2.d.txt")
+    n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_64_234/p6.2.n.txt")
     start_node = 1
     end_node = length(nodes)
     """
@@ -323,6 +324,11 @@ function main()
         
         println("\n")
         println(rl_dic)
+        rl_dic_sorted = sort(collect(rl_dic), by = x -> x[2][1], rev = true)
+        for kv in rl_dic_sorted
+            println("Key: ", kv[1], ", Value: ", kv[2])
+        end
+        
         if reward > best_reward
             best_reward = reward
             best_route = copy(routes)
