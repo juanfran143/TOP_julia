@@ -124,7 +124,7 @@ function calculate_savings_dict(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{I
 end
 
 function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Float64}}, routes::Dict{Int, Route}, max_distance::Float64, 
-    rl_dic::Dict{Array{Int64,1}, Array{Float64,1}})
+    rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, num_simulations::Int, max_simulations::Int)
     route1 = routes[Node1.route_id]
     route2 = routes[Node2.route_id]
 
@@ -136,7 +136,7 @@ function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Flo
         # Aprendizaje en el merge: Si es una mierda, entonces no las juntamos
         join = true
         if haskey(rl_dic, new_route)
-            if rl_dic[new_route][2] >= 300 && rl_dic[new_route][3] >=0.4
+            if rl_dic[new_route][2] >= max_simulations && rl_dic[new_route][3] >=0.4
                 #OJO!! Aún no se está aplicando a nada el join
                 join = false
             end
@@ -164,7 +164,7 @@ function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Flo
 
                 #Algoritmo Juanfran y Antonio contienen el siguiente cacho de código en común
                 
-            rl_dic[new_route] = update_dict(edges, max_distance, rl_dic, new_route, merged_route_reward)
+            rl_dic[new_route] = update_dict(edges, max_distance, rl_dic, new_route, merged_route_reward, num_simulations, max_simulations)
         end
         
         
@@ -172,7 +172,7 @@ function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Flo
 end
 
 function update_dict(edges::Dict{Int8, Dict{Int8, Float64}}, max_distance::Float64, 
-    rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, new_route::Array{Int8,1}, route_reward::Float64)
+    rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, new_route::Array{Int8,1}, route_reward::Float64, num_simulations::Int, max_simulations::Int)
     # rl_dic va a tener los siguientes atributos guardados por ruta
     #   - Reward medio
     #   - Número de simulaciones ejecutadas
@@ -183,8 +183,6 @@ function update_dict(edges::Dict{Int8, Dict{Int8, Float64}}, max_distance::Float
 
     # Meter como parámetro: Número de simulaciones que hagamos cada vez que ejecutaremos (num_simulations) y número máximo de simulaciones para
     # no simular mas (max_simulations)
-    num_simulations = 10
-    max_simulations = 300
 
     if haskey(rl_dic, new_route)
         if rl_dic[new_route][2] >= max_simulations
@@ -250,14 +248,14 @@ function get_reward_and_route(sorted_routes::Dict{Int64, Route}, n_vehicles::Int
     return (reward, routes)
 end
 
-function heuristic_with_BR(n_vehicles, nodes, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, alpha, beta, savings, rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, last_node::Int64)
+function heuristic_with_BR(n_vehicles, nodes, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, alpha, beta, savings, rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, last_node::Int64, num_simulations::Int, max_simulations::Int)
     routes = dummy_solution(nodes, edges, capacity, last_node)
     savings = reorder_saving_list(savings, beta)
     for key in keys(savings)
         if haskey(nodes, key[1]) && haskey(nodes, key[2])
             NodeX = nodes[key[1]]
             NodeY = nodes[key[2]]
-            merge_routes(NodeX, NodeY, edges, routes, capacity, rl_dic)
+            merge_routes(NodeX, NodeY, edges, routes, capacity, rl_dic, num_simulations, max_simulations)
         end
     end
     sorted_routes = sort(collect(routes), by = x -> x[2].reward, rev = true)
@@ -301,7 +299,8 @@ end
 function main()
     alpha = Float16(0.7)
     beta = Float16(0.7)
-
+    num_simulations = 10
+    max_simulations = 100
     #return n_nodes, n_vehicles, capacity, nodes
     # C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_64_234/p6.2.n.txt
     n_vehicles, capacity, nodes = parse_txt("Instances/Set_64_234/p6.2.n.txt")
@@ -322,15 +321,13 @@ function main()
         for iter in 1:100
             # print(iter)
             savings = copy(original_savings)
-            reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings, rl_dic, last_node)
-            
+            reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings, rl_dic, last_node, num_simulations, max_simulations)
             # println("\n")
             # println(rl_dic)
             rl_dic_sorted = sort(collect(rl_dic), by = x -> x[2][1], rev = true)
             # for kv in rl_dic_sorted
             #     println("Key: ", kv[1], ", Value: ", kv[2])
             # end
-            
             if reward > best_reward
                 best_reward = reward
                 best_route = copy(routes)
