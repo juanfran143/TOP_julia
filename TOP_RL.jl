@@ -106,8 +106,7 @@ function dummy_solution(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{Int8, Flo
 end
 
 function calculate_savings_dict(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{Int8, Float64}}, alpha:: Float16)
-    savings_dict = Dict{Tuple{Int, Int}, Float64}()
-
+    savings_dict = OrderedDict{Tuple{Int, Int}, Float64}()
     depot = nodes[1]
     n = length(nodes)
 
@@ -120,7 +119,7 @@ function calculate_savings_dict(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{I
         end
     end
     sorted_savings_dict = sort(collect(savings_dict), by = x -> x[2], rev = true)
-    sorted_savings_dict = Dict(kv[1] => kv[2] for kv in sorted_savings_dict)
+    sorted_savings_dict = OrderedDict(kv[1] => kv[2] for kv in sorted_savings_dict)
     return sorted_savings_dict
 end
 
@@ -228,7 +227,7 @@ function simulation_dict(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulations
     return (mean(avg_reward), n_fails/num_simulations)
 end
 
-function reorder_saving_list(savings::Dict{Tuple{Int, Int}, Float64}, beta::Float16)
+function reorder_saving_list(savings::OrderedDict{Tuple{Int, Int}, Float64}, beta::Float16)
     aux = OrderedDict{Tuple{Int, Int}, Float64}()
     keys_list = collect(keys(savings))
     while !isempty(savings)
@@ -321,16 +320,16 @@ function main()
     # Measuring the time whithout the pre-process
     @time begin
         for iter in 1:100
-            print(iter)
+            # print(iter)
             savings = copy(original_savings)
             reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings, rl_dic, last_node)
             
-            println("\n")
-            println(rl_dic)
+            # println("\n")
+            # println(rl_dic)
             rl_dic_sorted = sort(collect(rl_dic), by = x -> x[2][1], rev = true)
-            for kv in rl_dic_sorted
-                println("Key: ", kv[1], ", Value: ", kv[2])
-            end
+            # for kv in rl_dic_sorted
+            #     println("Key: ", kv[1], ", Value: ", kv[2])
+            # end
             
             if reward > best_reward
                 best_reward = reward
