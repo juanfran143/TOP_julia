@@ -304,7 +304,8 @@ function main()
     beta = Float16(0.7)
 
     #return n_nodes, n_vehicles, capacity, nodes
-    n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_64_234/p6.2.n.txt")
+    # C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_64_234/p6.2.n.txt
+    n_vehicles, capacity, nodes = parse_txt("Instances/Set_64_234/p6.2.n.txt")
     start_node = 1
     end_node = length(nodes)
     """
@@ -317,25 +318,28 @@ function main()
     best_route = Route[]
     last_node = length(nodes)
     rl_dic = Dict{Array{Int64,1}, Array{Float64,1}}()
-    for iter in 1:100
-        print(iter)
-        savings = copy(original_savings)
-        reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings, rl_dic, last_node)
-        
-        println("\n")
-        println(rl_dic)
-        rl_dic_sorted = sort(collect(rl_dic), by = x -> x[2][1], rev = true)
-        for kv in rl_dic_sorted
-            println("Key: ", kv[1], ", Value: ", kv[2])
+    # Measuring the time whithout the pre-process
+    @time begin
+        for iter in 1:100
+            print(iter)
+            savings = copy(original_savings)
+            reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings, rl_dic, last_node)
+            
+            println("\n")
+            println(rl_dic)
+            rl_dic_sorted = sort(collect(rl_dic), by = x -> x[2][1], rev = true)
+            for kv in rl_dic_sorted
+                println("Key: ", kv[1], ", Value: ", kv[2])
+            end
+            
+            if reward > best_reward
+                best_reward = reward
+                best_route = copy(routes)
+            end
         end
         
-        if reward > best_reward
-            best_reward = reward
-            best_route = copy(routes)
-        end
+        println("Best routes: ", best_route)
     end
-    
-    println("Best routes: ", best_route)
 end
 
 main()
