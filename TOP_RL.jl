@@ -225,7 +225,7 @@ function simulation_dict(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulations
     return (mean(avg_reward), n_fails/num_simulations)
 end
 
-function reorder_saving_list(savings::OrderedDict{Tuple{Int, Int}, Float64}, beta::Float16)
+function reorder_saving_list(savings::OrderedDict{Tuple{Int, Int}, Float64}, beta::Float64)
     aux = OrderedDict{Tuple{Int, Int}, Float64}()
     keys_list = collect(keys(savings))
     while !isempty(savings)
@@ -298,7 +298,7 @@ end
 
 function main()
     alpha = Float16(0.7)
-    beta = Float16(0.7)
+    # beta = Float16(0.7)
     num_simulations = 10
     max_simulations = 100
     #return n_nodes, n_vehicles, capacity, nodes
@@ -317,8 +317,31 @@ function main()
     last_node = length(nodes)
     rl_dic = Dict{Array{Int64,1}, Array{Float64,1}}()
     # Measuring the time whithout the pre-process
+    # No dynamic param
+    # @time begin
+    #     for iter in 1:100
+    #         # print(iter)
+    #         savings = copy(original_savings)
+    #         reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings, rl_dic, last_node, num_simulations, max_simulations)
+    #         # println("\n")
+    #         # println(rl_dic)
+    #         rl_dic_sorted = sort(collect(rl_dic), by = x -> x[2][1], rev = true)
+    #         # for kv in rl_dic_sorted
+    #         #     println("Key: ", kv[1], ", Value: ", kv[2])
+    #         # end
+    #         if reward > best_reward
+    #             best_reward = reward
+    #             best_route = copy(routes)
+    #         end
+    #     end
+        
+    #     println("Best routes: ", best_route)
+    # end
+    #Reactive Search
+    Param_dict,params,probabilities,no_null_index,cum_probabilities = Init_dict_probabilities(199)
     @time begin
-        for iter in 1:100
+        for iter in 1:1000
+            beta = choose_with_probability(params,no_null_index,cum_probabilities)
             # print(iter)
             savings = copy(original_savings)
             reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings, rl_dic, last_node, num_simulations, max_simulations)
@@ -332,9 +355,14 @@ function main()
                 best_reward = reward
                 best_route = copy(routes)
             end
+            if reward >Param_dict[beta][2]
+                Param_dict[beta][2]=reward
+            end
+
         end
         
-        println("Best routes: ", best_route)
+        println("Best routes: ", best_route,"\n", "Best Reward: ", best_reward)
+        # println(Param_dict)
     end
 end
 
