@@ -297,7 +297,7 @@ function precalculate_distances(nodes::Dict{Int64, Node})
 end
 
 function main()
-    alpha = Float16(0.7)
+    alpha = Float16(0.5)
     # beta = Float16(0.7)
     num_simulations = 10
     max_simulations = 100
@@ -338,9 +338,9 @@ function main()
     #     println("Best routes: ", best_route)
     # end
     #Reactive Search
-    Param_dict,params,probabilities,no_null_index,cum_probabilities = Init_dict_probabilities(199)
+    Param_dict,params,probabilities,no_null_index,cum_probabilities = Init_dict_probabilities(49)
     @time begin
-        for iter in 1:1000
+        for iter in 1:5000
             beta = choose_with_probability(params,no_null_index,cum_probabilities)
             # print(iter)
             savings = copy(original_savings)
@@ -355,14 +355,31 @@ function main()
                 best_reward = reward
                 best_route = copy(routes)
             end
+
             if reward >Param_dict[beta][2]
                 Param_dict[beta][2]=reward
             end
-
+            
+            #Por alguna razon que no entiendo no me deja llevarme esa funcion a otro archivo, tengo que investigar, la idea es que todo
+            # lo de dentro del if iter sea llamar a un método
+            if iter % 1000 ==999
+                # Idea: búsqueda de parámetros agresiva , elevar a c_test con c_test cada vez mas grande
+                c_test = floor((iter+2)/1000)
+                sum_q =  (sum([valor[2]^c_test for valor in values(Param_dict)]))
+                for key in keys(Param_dict)
+                    Param_dict[key][1] = (Param_dict[key][2]^c_test)/sum_q
+                    Param_dict[key][2] = 0 
+                end
+                params  = collect(keys(Param_dict))
+                probabilities = [valor[1] for valor in values(Param_dict)]
+                no_null_index = findall(probabilities .!=0)
+                cum_probabilities = cumsum(probabilities[no_null_index])
+            end
         end
         
-        println("Best routes: ", best_route,"\n", "Best Reward: ", best_reward)
+        # println("Best routes: ", best_route,"\n", "Best Reward: ", best_reward)
         # println(Param_dict)
+        println(best_reward)
     end
 end
 
