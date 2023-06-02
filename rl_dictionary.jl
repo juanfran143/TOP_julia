@@ -40,7 +40,8 @@ function simulation_dict(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulations
         dist = 0
         first_node = route[1]
         for next_node in route[2:end]
-            dist += modify_value_lognormal(edge_dist(edges, first_node, next_node), 0.2)
+            t_ij = edge_dist(edges, first_node, next_node)
+            dist += modify_value_lognormal(t_ij, t_ij*0.05)
             first_node = next_node
         end
 
@@ -96,7 +97,8 @@ function large_simulation(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulation
             dist = 0
             first_node = Int8(route[1])
             for next_node in route[2:end]
-                dist += modify_value_lognormal(edge_dist(edges, first_node, Int8(next_node)), 0.2)
+                t_ij = edge_dist(edges, first_node, Int8(next_node))
+                dist += modify_value_lognormal(t_ij, t_ij*0.05)
                 first_node = Int8(next_node)
             end
 

@@ -42,7 +42,7 @@ function calculate_savings_dict(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{I
         end
     end
     sorted_savings_dict = sort(collect(savings_dict), by = x -> x[2], rev = true)
-    sorted_savings_dict = Dict(kv[1] => kv[2] for kv in sorted_savings_dict)
+    sorted_savings_dict = OrderedDict(kv[1] => kv[2] for kv in sorted_savings_dict)
     return sorted_savings_dict
 end
 
@@ -101,7 +101,7 @@ function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Flo
 end
 
 
-function reorder_saving_list(savings::Dict{Tuple{Int, Int}, Float64}, beta::Float16)
+function reorder_saving_list(savings::OrderedDict{Tuple{Int, Int}, Float64}, beta::Float16)
     aux = OrderedDict{Tuple{Int, Int}, Float64}()
     keys_list = collect(keys(savings))
     while !isempty(savings)
@@ -141,26 +141,27 @@ function heuristic_with_BR(n_vehicles, nodes, edges::Dict{Int8, Dict{Int8, Float
 end
 
 function main()
-    alpha = Float16(0.7)
-    beta = Float16(0.6)
+    alpha = Float16(0.3)
+    beta = Float16(0.1)
 
     #return n_nodes, n_vehicles, capacity, nodes
     n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_64_234/p6.2.n.txt")
     start_node = 1
     end_node = length(nodes)
-    println(capacity)
+    
     """
     nodes = Dict{Int64, Node}(5 => Node(5, 10.0, 10.0, 0.0, 0), 4 => Node(4, 5.0, 3.0, 8.0, 0), 
                               2 => Node(2, 5.0, 6.0, 8.0, 0), 3 => Node(3, 2.0, 2.0, 4.0, 0), 1 => Node(1, 0.0, 0.0, 0.0, 0))
     """
     edges = precalculate_distances(nodes::Dict{Int64, Node})
     original_savings = calculate_savings_dict(nodes, edges, alpha)
+
     best_reward = 0
     best_route = Route[]
     last_node = length(nodes)
     rl_dic = Dict{Array{Int64,1}, Array{Float64,1}}()
-    for iter in 1:100
-        println(iter)
+    for iter in 1:50000
+        #println(iter)
         savings = copy(original_savings)
         reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings, rl_dic, last_node)
         
@@ -181,11 +182,14 @@ function main()
     rl_dic_sorted = sort(collect(rl_dic), by = x -> x[2][1], rev = true)
     rl_dic_sorted = OrderedDict(rl_dic_sorted)
     stochastic_solution = get_stochastic_solution(rl_dic_sorted, n_vehicles)
-    println(sum([v[2][1] for v in stochastic_solution]))
+    
     for kv in stochastic_solution
         println("Key: ", kv[1], ", Value: ", kv[2])
     end
-
+    println("El reward estocástico es: ",sum([v[2][1] for v in stochastic_solution]))
+    println("El reward real es: ", large_simulation(edges, 1000, capacity, stochastic_solution))
+    # large_simulation(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulations::Int, capacity::Float64, selected_pairs::Vector{Any})
+    #println("El reward en un entorno real es: ", )
     #println("Best routes: ", best_route)
 end
 
