@@ -31,17 +31,15 @@ end
 
 #Modify the dictionary
 
-# No funca, ni siquiera entra :/
-
-function modify_param_dictionary_RS(Param_dict, best_reward)
-    dict = copy(Param_dict)
-    println("entra")
-    sum_q =  best_reward* sum([1/valor[2] for valor in values(Param_dict)])
-    println(sum_q)
+function modify_param_dictionary_RS(Param_dict,k)
+    sum_q =  (sum([valor[2]^k for valor in values(Param_dict)]))
     for key in keys(Param_dict)
-        println(Param_dict[key][1]) 
-        Param_dict[key][1] = (best_reward/Param_dict[key][2])/sum_q 
-        println(Param_dict[key][1])
+        Param_dict[key][1] = (Param_dict[key][2]^k)/sum_q
+        Param_dict[key][2] = 0 
     end
-    return dict
+    params  = collect(keys(Param_dict))
+    probabilities = [valor[1] for valor in values(Param_dict)]
+    no_null_index = findall(probabilities .!=0)
+    cum_probabilities = cumsum(probabilities[no_null_index])
+    return params,probabilities,no_null_index,cum_probabilities
 end

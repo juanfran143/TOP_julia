@@ -297,8 +297,8 @@ function precalculate_distances(nodes::Dict{Int64, Node})
 end
 
 function main()
-    alpha = Float16(0.5)
-    # beta = Float16(0.7)
+    alpha = Float16(0.7)
+    # beta = Float64(0.7)
     num_simulations = 10
     max_simulations = 100
     #return n_nodes, n_vehicles, capacity, nodes
@@ -316,29 +316,9 @@ function main()
     best_route = Route[]
     last_node = length(nodes)
     rl_dic = Dict{Array{Int64,1}, Array{Float64,1}}()
-    # Measuring the time whithout the pre-process
-    # No dynamic param
-    # @time begin
-    #     for iter in 1:100
-    #         # print(iter)
-    #         savings = copy(original_savings)
-    #         reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings, rl_dic, last_node, num_simulations, max_simulations)
-    #         # println("\n")
-    #         # println(rl_dic)
-    #         rl_dic_sorted = sort(collect(rl_dic), by = x -> x[2][1], rev = true)
-    #         # for kv in rl_dic_sorted
-    #         #     println("Key: ", kv[1], ", Value: ", kv[2])
-    #         # end
-    #         if reward > best_reward
-    #             best_reward = reward
-    #             best_route = copy(routes)
-    #         end
-    #     end
-        
-    #     println("Best routes: ", best_route)
-    # end
     #Reactive Search
-    Param_dict,params,probabilities,no_null_index,cum_probabilities = Init_dict_probabilities(49)
+    Param_dict,params,probabilities,no_null_index,cum_probabilities = Init_dict_probabilities(9)
+    # Measuring the time whithout the pre-process    
     @time begin
         for iter in 1:5000
             beta = choose_with_probability(params,no_null_index,cum_probabilities)
@@ -360,20 +340,10 @@ function main()
                 Param_dict[beta][2]=reward
             end
             
-            #Por alguna razon que no entiendo no me deja llevarme esa funcion a otro archivo, tengo que investigar, la idea es que todo
-            # lo de dentro del if iter sea llamar a un método
             if iter % 1000 ==999
-                # Idea: búsqueda de parámetros agresiva , elevar a c_test con c_test cada vez mas grande
-                c_test = floor((iter+2)/1000)
-                sum_q =  (sum([valor[2]^c_test for valor in values(Param_dict)]))
-                for key in keys(Param_dict)
-                    Param_dict[key][1] = (Param_dict[key][2]^c_test)/sum_q
-                    Param_dict[key][2] = 0 
-                end
-                params  = collect(keys(Param_dict))
-                probabilities = [valor[1] for valor in values(Param_dict)]
-                no_null_index = findall(probabilities .!=0)
-                cum_probabilities = cumsum(probabilities[no_null_index])
+                # Idea: búsqueda de parámetros agresiva , elevar a k con k cada vez mas grande. Para ello usar f(k)
+                k = 2^((iter+1)/1000)
+                params,probabilities,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
             end
         end
         
