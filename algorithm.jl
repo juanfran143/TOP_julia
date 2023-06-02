@@ -87,10 +87,9 @@ function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Flo
 
                 #Algoritmo Juanfran y Antonio contienen el siguiente cacho de código en común
                 
-                if merged_route_distance >= max_distance/2
+                if merged_route_distance >= max_distance*2/3
                     reward_input, n_simulations_completed, fails_input = update_dict(edges, max_distance, rl_dic, new_route, merged_route_reward)
 
-                    #TODO Eliminar las últimas dos componentes (distancia determinista y reward determinista)
                     rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, merged_route_distance, merged_route_reward]
                 end
             end
@@ -99,7 +98,6 @@ function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Flo
         
     end
 end
-
 
 function reorder_saving_list(savings::OrderedDict{Tuple{Int, Int}, Float64}, beta::Float16)
     aux = OrderedDict{Tuple{Int, Int}, Float64}()
@@ -190,7 +188,7 @@ function main()
     println("El reward real es: ", large_simulation(edges, 1000, capacity, stochastic_solution))
     # large_simulation(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulations::Int, capacity::Float64, selected_pairs::Vector{Any})
     #println("El reward en un entorno real es: ", )
-    #println("Best routes: ", best_route)
+    println("Best routes reward: ", [reward.reward for reward in best_route])
 end
 
 main()
