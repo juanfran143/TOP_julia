@@ -298,7 +298,7 @@ end
 
 function main()
     alpha = Float16(0.7)
-    # beta = Float64(0.7)
+    # beta = Float64(0.1)
     num_simulations = 10
     max_simulations = 100
     #return n_nodes, n_vehicles, capacity, nodes
@@ -317,7 +317,7 @@ function main()
     last_node = length(nodes)
     rl_dic = Dict{Array{Int64,1}, Array{Float64,1}}()
     #Reactive Search
-    Param_dict,params,probabilities,no_null_index,cum_probabilities = Init_dict_probabilities(9)
+    Param_dict,params,no_null_index,cum_probabilities = Init_dict_probabilities(9)
     # Measuring the time whithout the pre-process    
     @time begin
         for iter in 1:5000
@@ -343,13 +343,12 @@ function main()
             if iter % 1000 ==999
                 # Idea: búsqueda de parámetros agresiva , elevar a k con k cada vez mas grande. Para ello usar f(k)
                 k = 2^((iter+1)/1000)
-                params,probabilities,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
+                params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
             end
         end
         
-        # println("Best routes: ", best_route,"\n", "Best Reward: ", best_reward)
+        println("Best routes: ", best_route,"\n", "Best Reward: ", best_reward)
         # println(Param_dict)
-        println(best_reward)
     end
 end
 
