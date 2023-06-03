@@ -47,7 +47,7 @@ function calculate_savings_dict(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{I
 end
 
 function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Float64}}, routes::Dict{Int, Route}, max_distance::Float64, 
-    rl_dic::Dict{Array{Int64,1}, Array{Float64,1}})
+    rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, parameters)
     route1 = routes[Node1.route_id]
     route2 = routes[Node2.route_id]
 
@@ -60,7 +60,7 @@ function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Flo
         join = true
         if haskey(rl_dic, new_route)
             # TODO Pensar un poco esto
-            if (rl_dic[new_route][2] >= 300 && rl_dic[new_route][3] >=0.3) || (rl_dic[new_route][2] >= 150 && rl_dic[new_route][3] >= 0.5)
+            if (rl_dic[new_route][2] == parameters["num_simulations_per_merge"] && rl_dic[new_route][3] >= parameters["max_reliability_to_merge_routes"])
                 join = false
             end
         end
@@ -87,8 +87,8 @@ function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Flo
 
                 #Algoritmo Juanfran y Antonio contienen el siguiente cacho de código en común
                 
-                if merged_route_distance >= max_distance*2/3
-                    reward_input, n_simulations_completed, fails_input = update_dict(edges, max_distance, rl_dic, new_route, merged_route_reward)
+                if merged_route_distance >= parameters["capacity"]*parameters["max_percentaje_of_distance_to_do_simulations"]
+                    reward_input, n_simulations_completed, fails_input = update_dict(edges, rl_dic, new_route, merged_route_reward, parameters)
 
                     rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, merged_route_distance, merged_route_reward]
                 end
@@ -122,34 +122,33 @@ function get_reward_and_route(sorted_routes::Dict{Int64, Route}, n_vehicles::Int
     return (reward, routes)
 end
 
-function heuristic_with_BR(n_vehicles, nodes, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, alpha, beta, savings, rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, last_node::Int64)
-    routes = dummy_solution(nodes, edges, capacity, last_node)
+function heuristic_with_BR(edges::Dict{Int8, Dict{Int8, Float64}}, beta, savings, rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, parameters)
+    routes = dummy_solution(parameters["nodes"], edges, parameters["capacity"], parameters["last_node"])
     savings = reorder_saving_list(savings, beta)
     for key in keys(savings)
-        if haskey(nodes, key[1]) && haskey(nodes, key[2])
-            NodeX = nodes[key[1]]
-            NodeY = nodes[key[2]]
-            merge_routes(NodeX, NodeY, edges, routes, capacity, rl_dic)
+        if haskey(parameters["nodes"], key[1]) && haskey(parameters["nodes"], key[2])
+            NodeX = parameters["nodes"][key[1]]
+            NodeY = parameters["nodes"][key[2]]
+            merge_routes(NodeX, NodeY, edges, routes, parameters["capacity"], rl_dic, parameters)
         end
     end
     sorted_routes = sort(collect(routes), by = x -> x[2].reward, rev = true)
     sorted_routes = Dict(kv[1] => kv[2] for kv in sorted_routes)
 
-    return get_reward_and_route(sorted_routes, n_vehicles)
+    return get_reward_and_route(sorted_routes, parameters["n_vehicles"])
 end
 
 function main()
     alpha = Float16(0.3)
-    beta = Float16(0.7)
-
+    beta = Float16(0.1)
 
     #return n_nodes, n_vehicles, capacity, nodes
-    n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_64_234/p6.2.n.txt")
+    n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_64_234/p6.3.g.txt")
 
     parameters = Dict(
         # Problem
         "start_node" => 1,
-        "end_node" => length(nodes),
+        "last_node" => length(nodes),
         "n_vehicles" => n_vehicles,
         "capacity" => capacity,
         "nodes" => nodes,
@@ -159,10 +158,14 @@ function main()
         "large_simulation_simulations" => 1000,
 
         # RL_DICT
-        "num_simulations_per_merge" => 20,
-        "max_simulations_per_route" => 100,
-        "max_reliability_to_merge_routes" => 0.4,
-        "max_percentaje_of_distance_to_do_simulations" => 2/3,
+        "num_simulations_per_merge" => 100,
+        "max_simulations_per_route" => 200,
+        "max_reliability_to_merge_routes" => 0.3,
+        "max_percentaje_of_distance_to_do_simulations" => 4/5,
+
+        # Stochastic solution
+        "num_iterations_stochastic_solution" => 50,
+        "beta_stochastic_solution" => 0.4
         )
 
     edges = precalculate_distances(nodes::Dict{Int64, Node})
@@ -170,29 +173,27 @@ function main()
 
     best_reward = 0
     best_route = Route[]
-    last_node = length(nodes)
     rl_dic = Dict{Array{Int64,1}, Array{Float64,1}}()
-    for _ in 1:50000
-        savings = copy(original_savings)
-        reward, routes = heuristic_with_BR(n_vehicles, nodes, edges, capacity, alpha, beta, savings, rl_dic, last_node)
-        
-        if reward > best_reward
-            best_reward = reward
-            best_route = copy(routes)
+    
+    @time begin 
+        for _ in 1:30000
+            savings = copy(original_savings)
+            reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
+            
+            if reward > best_reward
+                best_reward = reward
+                best_route = copy(routes)
+            end
         end
-    end
-    
-    rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
-    stochastic_solution = get_stochastic_solution(rl_dic_sorted, n_vehicles)
-    
-    for kv in stochastic_solution
-        println("Key: ", kv[1], ", Value: ", kv[2])
+        
+        rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
+        stochastic_solution = get_stochastic_solution_br(rl_dic_sorted, parameters)
     end
 
     println("El reward estocástico es: ",sum([v[2][1] for v in stochastic_solution]))
-    println("El reward real es: ", large_simulation(edges, 1000, capacity, stochastic_solution))
+    println("El reward real es: ", large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution))
 
-    println("Best deterministic routes reward: ", [reward.reward for reward in best_route])
+    #println("Best deterministic routes reward: ", [reward.reward for reward in best_route])
 end
 
 main()
