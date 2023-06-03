@@ -62,7 +62,11 @@ function get_stochastic_solution(rl_dic::OrderedDict{Array{Int64,1}, Array{Float
 
     # Crear una lista vacía para almacenar los pares seleccionados
     selected_pairs = []
-
+    """  
+    for kv in rl_dic
+        println("Key: ", kv[1], ", Value: ", kv[2])
+    end
+    """
     # Iterar sobre los pares del dict
     for (key, value) in rl_dic
         # Verificar si todos los nodos en la clave (excepto nodo origen y el destino) no han sido seleccionados antes
