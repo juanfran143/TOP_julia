@@ -5,12 +5,12 @@ using Random, Distributions, Combinatorics, DataStructures
 #Return the Param dict ( parameter => (probability, best reward =0)), the list of parameters,  and the cumulative distribuction
 
 function  Init_dict_probabilities(nParams::Int64)
-    Param_dict=Dict{Tuple{Float64,Float64},Array{Float64,1}}()
+    Param_dict=Dict{Tuple{Float16,Float16},Array{Float64,1}}()
     for i in 1:nParams
         for j in 1:nParams
             param_1 = round(i/((nParams+1)),digits =5)
             param_2 = round(j/((nParams+1)),digits =5)
-            Param_dict[(param_1,param_2)] = [1/(nParams)^2,0]
+            Param_dict[(Float16(param_1),Float16(param_2))] = [1/(nParams)^2,0]
         end
     end
     params  = collect(keys(Param_dict))

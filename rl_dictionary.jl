@@ -93,7 +93,7 @@ function get_stochastic_solution_br(rl_dic::OrderedDict{Array{Int64,1}, Array{Fl
     end
     best_pair = get_stochastic_solution_greedy(rl_dic_max, parameters["n_vehicles"])
     best_reward = sum([v[2][1] for v in best_pair])
-    println("Best stochastic reward greedy: ", best_reward)
+    #println("Best stochastic reward greedy: ", best_reward)
 
     for _ in 1:parameters["num_iterations_stochastic_solution"]
         # Iterar sobre los pares del dict
@@ -120,7 +120,7 @@ function get_stochastic_solution_br(rl_dic::OrderedDict{Array{Int64,1}, Array{Fl
                 end
             end
         end
-        println("New stochastic sol with reward ", new_reward)
+        #println("New stochastic sol with reward ", new_reward)
         if  new_reward > best_reward
             best_pair = copy(selected_pairs)
             best_reward = new_reward

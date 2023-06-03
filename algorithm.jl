@@ -5,6 +5,7 @@ include("parse.jl")
 include("get_edges.jl")
 include("simulation.jl")
 include("rl_dictionary.jl")
+include("reactive_Search.jl")
 
 function dummy_solution(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, last_node)
     routes = Dict{Int, Route}()
@@ -138,12 +139,16 @@ function heuristic_with_BR(edges::Dict{Int8, Dict{Int8, Float64}}, beta, savings
     return get_reward_and_route(sorted_routes, parameters["n_vehicles"])
 end
 
+function antonios_function(iter)
+    return 2^((iter+1)/1000)
+end
+
 function main()
-    alpha = Float16(0.3)
-    beta = Float16(0.1)
+    #alpha = Float16(0.3)
+    #beta = Float16(0.1)
 
     #return n_nodes, n_vehicles, capacity, nodes
-    n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_64_234/p6.3.g.txt")
+    n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_102_234/p7.4.t.txt")
 
     parameters = Dict(
         # Problem
@@ -155,7 +160,7 @@ function main()
         
         # simulations
         "var_lognormal" => 0.05,
-        "large_simulation_simulations" => 1000,
+        "large_simulation_simulations" => 10000,
 
         # RL_DICT
         "num_simulations_per_merge" => 100,
@@ -165,24 +170,47 @@ function main()
 
         # Stochastic solution
         "num_iterations_stochastic_solution" => 50,
-        "beta_stochastic_solution" => 0.4
+        "beta_stochastic_solution" => 0.4,
+
+        # Reactive 
+        "function" => antonios_function
         )
 
     edges = precalculate_distances(nodes::Dict{Int64, Node})
-    original_savings = calculate_savings_dict(nodes, edges, alpha)
+    list_savings_dict_alpha = Dict{Float16,OrderedDict{Tuple{Int, Int}, Float64}}()
+    for i=1:9
+        list_savings_dict_alpha[Float16(i/10)] = calculate_savings_dict(nodes, edges, Float16(i/10))
+    end
 
     best_reward = 0
     best_route = Route[]
     rl_dic = Dict{Array{Int64,1}, Array{Float64,1}}()
-    
+    Param_dict,params,no_null_index,cum_probabilities = Init_dict_probabilities(9)
     @time begin 
-        for _ in 1:30000
+        for iter in 1:50000
+
+            (alpha,beta) = choose_with_probability(params,no_null_index, cum_probabilities)
+
+            original_savings=list_savings_dict_alpha[alpha]
+
             savings = copy(original_savings)
+
             reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
             
             if reward > best_reward
                 best_reward = reward
                 best_route = copy(routes)
+            end
+
+            if reward > Param_dict[(alpha,beta)][2] && iter <= 5000
+                Param_dict[(alpha,beta)][2]=reward
+            end
+            
+            if iter % 1000 == 999 && iter <= 5000
+                # Idea: búsqueda de parámetros agresiva , elevar a k con k cada vez mas grande. Para ello usar f(k)
+                #println(Param_dict)
+                k = parameters["function"](iter)
+                params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
             end
         end
         
