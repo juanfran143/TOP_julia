@@ -1,9 +1,14 @@
-using Random, Distributions, Combinatorics, DataStructures
+using Random, Distributions, Combinatorics, DataStructures, Base.Threads
+
+seed_value = 123
+Random.seed!(seed_value)
+
+ENV["JULIA_NUM_THREADS"]= "4"  #n workers config
 
 include("structs.jl")
 include("parse.jl")
 include("get_edges.jl")
-include("simulation.jl")
+# include("simulation.jl")  !!NO SE ESTÁ USANDO
 include("rl_dictionary.jl")
 include("reactive_Search.jl")
 
@@ -148,7 +153,8 @@ function main()
     #beta = Float16(0.1)
 
     #return n_nodes, n_vehicles, capacity, nodes
-    n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_102_234/p7.4.t.txt")
+    # n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_102_234/p7.4.t.txt")
+    n_vehicles, capacity, nodes = parse_txt("Instances/Set_64_234/p6.4.n.txt")
 
     parameters = Dict(
         # Problem
@@ -187,7 +193,7 @@ function main()
     rl_dic = Dict{Array{Int64,1}, Array{Float64,1}}()
     Param_dict,params,no_null_index,cum_probabilities = Init_dict_probabilities(9)
     @time begin 
-        for iter in 1:50000
+        for iter in 1:10000
 
             (alpha,beta) = choose_with_probability(params,no_null_index, cum_probabilities)
 
