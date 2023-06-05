@@ -43,7 +43,7 @@ function update_dict(edges::Dict{Int8, Dict{Int8, Float64}},
     
 end
 
-function single_simulation_dict(edges::Dict{Int8, Dict{Int8, Float64}}, route::Array{Int8,1}, route_reward::Float64, parameters, fails::Atomic{Int64}, avg_reward::Vector{Float64})
+function single_simulation_dict(edges::Dict{Int8, Dict{Int8, Float64}}, route::Array{Int8,1}, route_reward::Float64, parameters, fails::Atomic{Int64}, avg_reward)
     thread_number_sims = floor(Int, parameters["num_simulations_per_merge"]/4)
     local_array = Float64[]
     
@@ -71,8 +71,8 @@ end
 
 function simulation_dict(edges::Dict{Int8, Dict{Int8, Float64}}, route::Array{Int8,1}, route_reward::Float64, parameters)
     fails = Atomic{Int64}(0)
-    avg_reward = Vector{Float64}[]
-    for _ in 1:4
+    avg_reward = []
+    @threads for _ in 1:4
         single_simulation_dict(edges, route, route_reward, parameters, fails, avg_reward)
     end
     avg_reward = vcat(avg_reward...)
