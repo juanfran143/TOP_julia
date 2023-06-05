@@ -1,7 +1,9 @@
-using Random, Distributions, Combinatorics, DataStructures, Base.Threads
+using Random, Distributions, Combinatorics, DataStructures, Base.Threads, Dates
 
-seed_value = 123
-Random.seed!(seed_value)
+#Random parameters
+seed_value = 888
+rng = Random.GLOBAL_RNG
+Random.seed!(rng,seed_value)
 
 ENV["JULIA_NUM_THREADS"]= "4"  #n workers config
 
@@ -148,7 +150,7 @@ function antonios_function(iter)
     return 2^((iter+1)/1000)
 end
 
-function main()
+function main_iterations()
     #alpha = Float16(0.3)
     #beta = Float16(0.1)
 
@@ -179,7 +181,9 @@ function main()
         "beta_stochastic_solution" => 0.4,
 
         # Reactive 
-        "function" => antonios_function
+        "function" => antonios_function,
+        "alpha_candidates" => [0.3, 0.4, 0.5, 0.6, 0.7],
+        "beta_candidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
         )
 
     edges = precalculate_distances(nodes::Dict{Int64, Node})
@@ -191,9 +195,97 @@ function main()
     best_reward = 0
     best_route = Route[]
     rl_dic = Dict{Array{Int64,1}, Array{Float64,1}}()
-    Param_dict,params,no_null_index,cum_probabilities = Init_dict_probabilities(9)
+    Param_dict,params,no_null_index,cum_probabilities = Init_dict_probabilities(parameters["alpha_candidates"],parameters["beta_candidates"])
     @time begin 
         for iter in 1:10000
+
+            (alpha,beta) = choose_with_probability(params,no_null_index, cum_probabilities)
+
+            original_savings=list_savings_dict_alpha[alpha]
+
+            savings = copy(original_savings)
+
+            reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
+            
+            if reward > best_reward
+                best_reward = reward
+                best_route = copy(routes)
+            end
+
+            # if reward > Param_dict[(alpha,beta)][2] && iter <= 5000
+            #     Param_dict[(alpha,beta)][2]=reward
+            # end
+            
+            # if iter % 1000 == 999 && iter <= 5000
+            #     # Idea: búsqueda de parámetros agresiva , elevar a k con k cada vez mas grande. Para ello usar f(k)
+            #     # println(Param_dict)
+            #     k = parameters["function"](iter)
+            #     params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
+            # end
+        end
+        
+        rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
+        stochastic_solution = get_stochastic_solution_br(rl_dic_sorted, parameters)
+    end
+    println("El reward estocástico es: ",sum([v[2][1] for v in stochastic_solution]))
+    println("El reward real es: ", large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution))
+    #println("Best deterministic routes reward: ", [reward.reward for reward in best_route])
+end
+
+
+function main_time(time::Int16)
+    #alpha = Float16(0.3)
+    #beta = Float16(0.1)
+
+    #return n_nodes, n_vehicles, capacity, nodes
+    # n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_102_234/p7.4.t.txt")
+    n_vehicles, capacity, nodes = parse_txt("Instances/Set_64_234/p6.3.n.txt")
+
+    parameters = Dict(
+        # Problem
+        "start_node" => 1,
+        "last_node" => length(nodes),
+        "n_vehicles" => n_vehicles,
+        "capacity" => capacity,
+        "nodes" => nodes,
+        
+        # simulations
+        "var_lognormal" => 0.05,
+        "large_simulation_simulations" => 10000,
+
+        # RL_DICT
+        "num_simulations_per_merge" => 100,
+        "max_simulations_per_route" => 200,
+        "max_reliability_to_merge_routes" => 0.3,
+        "max_percentaje_of_distance_to_do_simulations" => 4/5,
+
+        # Stochastic solution
+        "num_iterations_stochastic_solution" => 50,
+        "beta_stochastic_solution" => 0.4,
+
+        # Reactive 
+        "function" => antonios_function,
+        "alpha_candidates" => [0.3, 0.4, 0.5, 0.6, 0.7],
+        "beta_candidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+        )
+
+    edges = precalculate_distances(nodes::Dict{Int64, Node})
+    list_savings_dict_alpha = Dict{Float16,OrderedDict{Tuple{Int, Int}, Float64}}()
+    for i=1:9
+        list_savings_dict_alpha[Float16(i/10)] = calculate_savings_dict(nodes, edges, Float16(i/10))
+    end
+
+    best_reward = 0
+    best_route = Route[]
+    rl_dic = Dict{Array{Int64,1}, Array{Float64,1}}()
+    Param_dict,params,no_null_index,cum_probabilities = Init_dict_probabilities(parameters["alpha_candidates"],parameters["beta_candidates"])
+    
+    duration_seconds = time
+    iter = 1
+    start_time = now()
+    
+    @time begin 
+        while now() - start_time < Second(duration_seconds)
 
             (alpha,beta) = choose_with_probability(params,no_null_index, cum_probabilities)
 
@@ -214,20 +306,22 @@ function main()
             
             if iter % 1000 == 999 && iter <= 5000
                 # Idea: búsqueda de parámetros agresiva , elevar a k con k cada vez mas grande. Para ello usar f(k)
-                #println(Param_dict)
+                # println(Param_dict)
                 k = parameters["function"](iter)
                 params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
             end
+            iter +=1
         end
-        
+        println("Número de iteraciones : ", iter)
+        println("\n")
         rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
         stochastic_solution = get_stochastic_solution_br(rl_dic_sorted, parameters)
     end
-
     println("El reward estocástico es: ",sum([v[2][1] for v in stochastic_solution]))
     println("El reward real es: ", large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution))
-
     #println("Best deterministic routes reward: ", [reward.reward for reward in best_route])
 end
 
-main()
+
+# main_iterations()
+main_time(Int16(100))
