@@ -7,6 +7,8 @@ include("simulation.jl")
 include("rl_dictionary.jl")
 include("reactive_Search.jl")
 
+
+
 function dummy_solution(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, last_node)
     routes = Dict{Int, Route}()
     for (id, node) in pairs(nodes)
@@ -143,12 +145,12 @@ function antonios_function(iter)
     return 2^((iter+1)/1000)
 end
 
-function main()
+function algo(txt::Dict)
     #alpha = Float16(0.3)
     #beta = Float16(0.1)
 
     #return n_nodes, n_vehicles, capacity, nodes
-    n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_102_234/p7.4.t.txt")
+    n_vehicles, capacity, nodes = parse_txt(string(txt["instance"]))
 
     parameters = Dict(
         # Problem
@@ -163,14 +165,14 @@ function main()
         "large_simulation_simulations" => 10000,
 
         # RL_DICT
-        "num_simulations_per_merge" => 100,
-        "max_simulations_per_route" => 200,
-        "max_reliability_to_merge_routes" => 0.3,
-        "max_percentaje_of_distance_to_do_simulations" => 4/5,
+        "num_simulations_per_merge" => txt["num_simulations_per_merge"],
+        "max_simulations_per_route" => txt["max_simulations_per_route"],
+        "max_reliability_to_merge_routes" => txt["max_reliability_to_merge_routes"],
+        "max_percentaje_of_distance_to_do_simulations" => txt["max_percentaje_of_distance_to_do_simulations"],
 
         # Stochastic solution
-        "num_iterations_stochastic_solution" => 50,
-        "beta_stochastic_solution" => 0.4,
+        "num_iterations_stochastic_solution" => txt["num_iterations_stochastic_solution"],
+        "beta_stochastic_solution" => txt["beta_stochastic_solution"],
 
         # Reactive 
         "function" => antonios_function
@@ -186,42 +188,42 @@ function main()
     best_route = Route[]
     rl_dic = Dict{Array{Int64,1}, Array{Float64,1}}()
     Param_dict,params,no_null_index,cum_probabilities = Init_dict_probabilities(9)
-    @time begin 
-        for iter in 1:50000
+    cache = Dict()
 
-            (alpha,beta) = choose_with_probability(params,no_null_index, cum_probabilities)
+    for iter in 1:5000
 
-            original_savings=list_savings_dict_alpha[alpha]
+        (alpha,beta) = choose_with_probability(params,no_null_index, cum_probabilities)
 
-            savings = copy(original_savings)
+        original_savings=list_savings_dict_alpha[alpha]
 
-            reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
+        savings = copy(original_savings)
+
+        reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
+        #improveWithCache(cache, routes)
+        if reward > best_reward
+            best_reward = reward
+            best_route = copy(routes)
+        end
             
-            if reward > best_reward
-                best_reward = reward
-                best_route = copy(routes)
-            end
-
-            if reward > Param_dict[(alpha,beta)][2] && iter <= 5000
-                Param_dict[(alpha,beta)][2]=reward
-            end
+        if reward > Param_dict[(alpha,beta)][2] && iter <= 5000
+            Param_dict[(alpha,beta)][2]=reward
+        end
             
-            if iter % 1000 == 999 && iter <= 5000
+        if iter % 1000 == 999 && iter <= 5000
                 # Idea: búsqueda de parámetros agresiva , elevar a k con k cada vez mas grande. Para ello usar f(k)
                 #println(Param_dict)
-                k = parameters["function"](iter)
-                params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
-            end
+            k = parameters["function"](iter)
+            params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
         end
-        
-        rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
-        stochastic_solution = get_stochastic_solution_br(rl_dic_sorted, parameters)
     end
+        
+    rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
+    stochastic_solution = get_stochastic_solution_br(rl_dic_sorted, parameters)
+
 
     println("El reward estocástico es: ",sum([v[2][1] for v in stochastic_solution]))
     println("El reward real es: ", large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution))
 
-    #println("Best deterministic routes reward: ", [reward.reward for reward in best_route])
+    println("Best deterministic routes reward: ", best_route)
 end
 
-main()
