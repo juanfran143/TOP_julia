@@ -24,8 +24,9 @@ end
 function improveNodesOrder(aRoute::Route, edges)
     nodes = aRoute.route
 
-    if length(edges) >= 4
-        for i in 1:length(edges)-3
+    if length(nodes) >= 4
+        dist = aRoute.dist
+        for i in 1:length(nodes)-3
             #edge_dist(edge::Dict{Int8, Dict{Int8, Float64}}, i::Int8, j::Int8)
             e1 = edge_dist(edges, nodes[i].id, nodes[i+1].id)
             e2 = edge_dist(edges, nodes[i + 1].id, nodes[i+2].id)
@@ -39,19 +40,59 @@ function improveNodesOrder(aRoute::Route, edges)
 
             alterCosts = ae1 + ae2 + ae3
             if (alterCosts < currentCosts)
-                aRoute.dist -= e1 + e2 + e3
-                aRoute.dist += ae1 + ae2 + ae3
+                dist = dist + (ae1 + ae2 + ae3) - (e1 + e2 + e3)
+                node_aux1 = nodes[i+2]
+                node_aux2 = nodes[i+1]
+                deleteat!(nodes, i+1)
+                insert!(nodes, i+1, node_aux1)
 
-                deleteat!(aRoute.route, i+1)
-                insert!(aRoute.route, i+1, nodes[i+2])
-
-                deleteat!(aRoute.route, i+2)
-                insert!(aRoute.route, i+2, nodes[i+1])
+                deleteat!(nodes, i+2)
+                insert!(nodes, i+2, node_aux2)
             end
         end
     end
 
-    return aRoute
+    return Route(nodes, dist, aRoute.reward)
+end
+
+
+function improveNodesOrder_while_possible(aRoute::Route, edges)
+    nodes = aRoute.route
+
+    if length(nodes) >= 4
+        dist = aRoute.dist
+        improve = true
+        while improve
+            improve = false
+            for i in 1:length(nodes)-3
+                #edge_dist(edge::Dict{Int8, Dict{Int8, Float64}}, i::Int8, j::Int8)
+                e1 = edge_dist(edges, nodes[i].id, nodes[i+1].id)
+                e2 = edge_dist(edges, nodes[i + 1].id, nodes[i+2].id)
+                e3 = edge_dist(edges, nodes[i + 2].id, nodes[i+3].id)
+                currentCosts = e1 + e2 + e3
+                
+                #ae := Alternative edge
+                ae1 = edge_dist(edges, nodes[i].id, nodes[i+2].id)
+                ae2 = edge_dist(edges, nodes[i+2].id, nodes[i+1].id)
+                ae3 = edge_dist(edges, nodes[i+1].id, nodes[i+3].id)
+    
+                alterCosts = ae1 + ae2 + ae3
+                if (alterCosts < currentCosts)
+                    dist = dist + (ae1 + ae2 + ae3) - (e1 + e2 + e3)
+                    node_aux1 = nodes[i+2]
+                    node_aux2 = nodes[i+1]
+                    deleteat!(nodes, i+1)
+                    insert!(nodes, i+1, node_aux1)
+    
+                    deleteat!(nodes, i+2)
+                    insert!(nodes, i+2, node_aux2)
+                    improve = true
+                end
+            end 
+        end
+    end
+
+    return Route(nodes, dist, aRoute.reward)
 end
 
 function improveWithCache(cache::Dict, newSol, edges)
@@ -62,19 +103,18 @@ function improveWithCache(cache::Dict, newSol, edges)
 
         skey = obtainKey(route)
 
-        if !haskey(cache.cache, skey)
-            cache.cache[skey] = route
+        if !haskey(cache, skey)
+            cache[skey] = route
         else
-            rCached = cache.cache[skey]
+            rCached = cache[skey]
 
             dif = rCached.dist - route.dist
             if dif > 0
-                cache.cache[skey] = route
+                cache[skey] = route
             elseif dif != 0
-                cost = sum([r.dist for r in newSol.route])
-                newSol.dist = cost
-                deleteat!(newSol.route, i)
-                push!(newSol.route, rCached)
+                #TODO ver si funciona
+                deleteat!(newSol, i)
+                insert!(newSol, i, cache[skey])
             end
         end
     end
@@ -109,7 +149,7 @@ function main()
 
     edges = precalculate_distances(nodes::Dict{Int64, Node})
 
-    newSol = Route[Route(Node[Node(1, 0.0, -7.0, 0.0, 1), Node(5, 0.0, -5.0, 6.0, 4), Node(13, 0.0, -3.0, 12.0, 4), Node(14, 2.0, -3.0, 18.0, 4), Node(20, 3.0, -2.0, 24.0, 4), Node(34, 3.0, 0.0, 30.0, 4), Node(27, 4.0, -1.0, 30.0, 4), Node(42, 4.0, 1.0, 30.0, 4), Node(48, 3.0, 2.0, 24.0, 4), Node(53, 2.0, 3.0, 18.0, 4), Node(63, 1.0, 6.0, 6.0, 4), Node(64, 0.0, 7.0, 0.0, 1)], 20.23334547203386, 198.0), Route(Node[Node(1, 0.0, -7.0, 0.0, 1), Node(8, -1.0, -4.0, 12.0, 7), Node(18, -1.0, -2.0, 18.0, 7), Node(25, 0.0, -1.0, 18.0, 7), Node(40, 0.0, 1.0, 18.0, 7), Node(47, 1.0, 2.0, 18.0, 7), Node(57, 1.0, 4.0, 12.0, 7), Node(64, 0.0, 7.0, 0.0, 1)], 15.15298244508295, 96.0)]
+    newSol = Route[Route(Node[Node(1, 0.0, -7.0, 0.0, 1), Node(14, 2.0, -3.0, 18.0, 4), Node(20, 3.0, -2.0, 24.0, 4), Node(34, 3.0, 0.0, 30.0, 4), Node(27, 4.0, -1.0, 30.0, 4), Node(42, 4.0, 1.0, 30.0, 4), Node(48, 3.0, 2.0, 24.0, 4)], 20.23334547203386, 198.0), Route(Node[Node(1, 0.0, -7.0, 0.0, 1), Node(8, -1.0, -4.0, 12.0, 7), Node(18, -1.0, -2.0, 18.0, 7), Node(25, 0.0, -1.0, 18.0, 7), Node(40, 0.0, 1.0, 18.0, 7), Node(47, 1.0, 2.0, 18.0, 7), Node(57, 1.0, 4.0, 12.0, 7), Node(64, 0.0, 7.0, 0.0, 1)], 15.15298244508295, 96.0)]
     cache = Dict()
     improveWithCache(cache::Dict, newSol, edges)
 end
