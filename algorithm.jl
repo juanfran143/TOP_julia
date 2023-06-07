@@ -6,7 +6,7 @@ include("get_edges.jl")
 include("simulation.jl")
 include("rl_dictionary.jl")
 include("reactive_Search.jl")
-
+include("local_search_cache.jl")
 
 
 function dummy_solution(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, last_node)
@@ -190,7 +190,7 @@ function algo(txt::Dict)
     Param_dict,params,no_null_index,cum_probabilities = Init_dict_probabilities(9)
     cache = Dict()
 
-    for iter in 1:5000
+    for iter in 1:1000
 
         (alpha,beta) = choose_with_probability(params,no_null_index, cum_probabilities)
 
@@ -199,7 +199,9 @@ function algo(txt::Dict)
         savings = copy(original_savings)
 
         reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
-        #improveWithCache(cache, routes)
+        
+        #routes = improveWithCache(cache, routes, edges, rl_dic, parameters)
+
         if reward > best_reward
             best_reward = reward
             best_route = copy(routes)
@@ -220,10 +222,13 @@ function algo(txt::Dict)
     rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
     stochastic_solution = get_stochastic_solution_br(rl_dic_sorted, parameters)
 
-
+    stochastic_reward = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution)
     println("El reward estocástico es: ",sum([v[2][1] for v in stochastic_solution]))
-    println("El reward real es: ", large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution))
+    println("El reward real es: ", stochastic_reward)
 
+    det_reward = sum(i.reward for i in best_route)
     println("Best deterministic routes reward: ", best_route)
+    print(best_reward)
+    return det_reward, stochastic_reward
 end
 

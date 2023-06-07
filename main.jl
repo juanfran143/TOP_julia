@@ -11,9 +11,11 @@ include("algorithm.jl")
 function main()
     raw_data = readdlm("config.txt", '\n')
 
+    file = open("Output.txt", "w")
+
+    write(file, "Instancia;num_simulations_per_merge;max_simulations_per_route;max_reliability_to_merge_routes;max_percentaje_of_distance_to_do_simulations;num_iterations_stochastic_solution;beta_stochastic_solution;det_reward;stochastic_reward","\n")
     # Itera sobre cada línea en raw_data
     for line in eachrow(raw_data)
-        println(line)
         str = line[1]
         str_splitted = split(str)
         if startswith(line[1], "#")
@@ -38,7 +40,10 @@ function main()
             "beta_stochastic_solution" => parse(Float64, beta_stochastic_solution)
         )
 
-        algo(txt)
+        det_reward, stochastic_reward = algo(txt)
+        write(file, txt["instance"],";",string(txt["num_simulations_per_merge"]),";",string(txt["max_simulations_per_route"]),";",
+        string(txt["max_reliability_to_merge_routes"]),";",string(txt["max_percentaje_of_distance_to_do_simulations"]),";",
+        string(txt["num_iterations_stochastic_solution"]),";",string(txt["beta_stochastic_solution"]),";",string(det_reward),";",string(stochastic_reward),"\n")
     end  
 end
 
