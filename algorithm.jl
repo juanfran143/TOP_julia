@@ -1,4 +1,8 @@
-using Random, Distributions, Combinatorics, DataStructures
+using Random, Distributions, Combinatorics, DataStructures, Dates, Plot, Base.Threads
+
+seed = 123
+Random.seed!(seed)
+
 
 include("structs.jl")
 include("parse.jl")
@@ -7,7 +11,7 @@ include("simulation.jl")
 include("rl_dictionary.jl")
 include("reactive_Search.jl")
 include("local_search_cache.jl")
-
+include("plot_solutions.jl")
 
 function dummy_solution(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, last_node)
     routes = Dict{Int, Route}()
@@ -232,3 +236,99 @@ function algo(txt::Dict)
     return det_reward, stochastic_reward
 end
 
+
+
+
+function algo_time(txt::Dict, time::Int16)
+    #alpha = Float16(0.3)
+    #beta = Float16(0.1)
+
+    #return n_nodes, n_vehicles, capacity, nodes
+    n_vehicles, capacity, nodes = parse_txt(string(txt["instance"]))
+
+    parameters = Dict(
+        # Problem
+        "start_node" => 1,
+        "last_node" => length(nodes),
+        "n_vehicles" => n_vehicles,
+        "capacity" => capacity,
+        "nodes" => nodes,
+        
+        # simulations
+        "var_lognormal" => 0.05,
+        "large_simulation_simulations" => 10000,
+
+        # RL_DICT
+        "num_simulations_per_merge" => txt["num_simulations_per_merge"],
+        "max_simulations_per_route" => txt["max_simulations_per_route"],
+        "max_reliability_to_merge_routes" => txt["max_reliability_to_merge_routes"],
+        "max_percentaje_of_distance_to_do_simulations" => txt["max_percentaje_of_distance_to_do_simulations"],
+
+        # Stochastic solution
+        "num_iterations_stochastic_solution" => txt["num_iterations_stochastic_solution"],
+        "beta_stochastic_solution" => txt["beta_stochastic_solution"],
+
+        # Reactive 
+        "function" => antonios_function,
+        "alpha_candidates" => [0.3, 0.4, 0.5, 0.6, 0.7],
+        "beta_cancidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+        )
+
+    edges = precalculate_distances(nodes::Dict{Int64, Node})
+    list_savings_dict_alpha = Dict{Float16,OrderedDict{Tuple{Int, Int}, Float64}}()
+    for i in parameters["alpha_candidates"]
+        list_savings_dict_alpha[Float16(i)] = calculate_savings_dict(nodes, edges, Float16(i))
+    end
+
+    best_reward = 0
+    best_route = Route[]
+    rl_dic = Dict{Array{Int64,1}, Array{Float64,1}}()
+    Param_dict,params,no_null_index,cum_probabilities = Init_dict_probabilities(parameters["alpha_candidates"], parameters["beta_cancidates"])
+    cache = Dict()
+
+    duration_senconds = time
+    iter = 1
+    start_time = now()
+
+    while now()-start_time<Second(duration_senconds)
+
+        (alpha,beta) = choose_with_probability(params,no_null_index, cum_probabilities)
+
+        original_savings=list_savings_dict_alpha[alpha]
+
+        savings = copy(original_savings)
+
+        reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
+        
+        routes = improveWithCache(cache, routes, edges, rl_dic, parameters)
+
+        if reward > best_reward
+            best_reward = reward
+            best_route = copy(routes)
+        end
+            
+        if reward > Param_dict[(alpha,beta)][2] && iter <= 5000
+            Param_dict[(alpha,beta)][2]=reward
+        end
+            
+        if iter % 1000 == 999 && iter <= 5000
+            k = parameters["function"](iter)
+            params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
+        end
+        iter += 1
+    end
+    
+    println("Número de iteraciones: ", iter)
+    println("")
+    rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
+    stochastic_solution = get_stochastic_solution_br(rl_dic_sorted, parameters)
+
+    stochastic_reward = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution)
+    println("El reward estocástico es: ",sum([v[2][1] for v in stochastic_solution]))
+    println("El reward real es: ", stochastic_reward)
+
+    det_reward = sum(i.reward for i in best_route)
+    println("Best deterministic routes reward: ", best_route)
+    print(best_reward)
+    return det_reward, stochastic_reward
+end
