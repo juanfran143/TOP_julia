@@ -1,4 +1,4 @@
-using Random, Distributions, Combinatorics, DataStructures, Dates, Plot, Base.Threads
+using Random, Distributions, Combinatorics, DataStructures, Dates, Plots, Base.Threads
 
 seed = 123
 Random.seed!(seed)
@@ -318,17 +318,20 @@ function algo_time(txt::Dict, time::Int16)
         iter += 1
     end
     
+    plot_routes(nodes,best_route)
     println("Número de iteraciones: ", iter)
     println("")
     rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
     stochastic_solution = get_stochastic_solution_br(rl_dic_sorted, parameters)
+    
+    plot_routes_Sto(nodes,stochastic_solution)
 
     stochastic_reward = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution)
     println("El reward estocástico es: ",sum([v[2][1] for v in stochastic_solution]))
     println("El reward real es: ", stochastic_reward)
 
     det_reward = sum(i.reward for i in best_route)
-    println("Best deterministic routes reward: ", best_route)
+    # println("Best deterministic routes reward: ", best_route)
     print(best_reward)
     return det_reward, stochastic_reward
 end
