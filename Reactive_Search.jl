@@ -4,13 +4,12 @@ using Random, Distributions, Combinatorics, DataStructures
 #Initial parameter candidates with equal choose_with_probability
 #Return the Param dict ( parameter => (probability, best reward =0)), the list of parameters,  and the cumulative distribuction
 
-function  Init_dict_probabilities(nParams::Int64)
+function  Init_dict_probabilities(alpha_candidates,beta_candidates)
     Param_dict=Dict{Tuple{Float16,Float16},Array{Float64,1}}()
-    for i in 1:nParams
-        for j in 1:nParams
-            param_1 = round(i/((nParams+1)),digits =5)
-            param_2 = round(j/((nParams+1)),digits =5)
-            Param_dict[(Float16(param_1),Float16(param_2))] = [1/(nParams)^2,0]
+    len_params = length(alpha_candidates)*length(beta_candidates)
+    for a in alpha_candidates
+        for b in beta_candidates
+            Param_dict[(Float16(a),Float16(b))] = [1/len_params,0]
         end
     end
     params  = collect(keys(Param_dict))

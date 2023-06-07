@@ -1,4 +1,14 @@
-using Random, Distributions, Combinatorics, DataStructures
+using Random, Distributions, Combinatorics, DataStructures, Distributed, Base.Threads
+
+# addprocs(4)
+
+function modify_value_lognormal(mean::Float64, variance::Float64)
+    mu = log(mean^2 / sqrt(mean^2 + variance))
+    sigma = sqrt(log(1 + (variance / mean^2)))
+    lognormal_dist = LogNormal(mu, sigma)
+    return rand(lognormal_dist)
+end
+
 
 function update_dict(edges::Dict{Int8, Dict{Int8, Float64}},
     rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, new_route::Array{Int8,1}, route_reward::Float64, parameters)
@@ -33,28 +43,42 @@ function update_dict(edges::Dict{Int8, Dict{Int8, Float64}},
     
 end
 
-function simulation_dict(edges::Dict{Int8, Dict{Int8, Float64}}, route::Array{Int8,1}, route_reward::Float64, parameters)
-    avg_reward = []
-    n_fails = 0
-    for _ in 1:parameters["num_simulations_per_merge"]
+function single_simulation_dict(edges::Dict{Int8, Dict{Int8, Float64}}, route::Array{Int8,1}, route_reward::Float64, parameters, fails::Atomic{Int64}, avg_reward)
+    thread_number_sims = floor(Int, parameters["num_simulations_per_merge"]/4)
+    local_array = Float64[]
+    
+    for _ in 1:thread_number_sims
         dist = 0
         first_node = route[1]
+
         for next_node in route[2:end]
             t_ij = edge_dist(edges, first_node, next_node)
-            dist += modify_value_lognormal(t_ij, t_ij*parameters["var_lognormal"])
+            dist += modify_value_lognormal(t_ij, t_ij * parameters["var_lognormal"])
             first_node = next_node
         end
 
         reward = route_reward
         if dist > parameters["capacity"]
             reward = 0
-            n_fails += 1
+            atomic_add!(fails, 1)
         end
-        push!(avg_reward, reward)
+        push!(local_array, reward)
     end
-
-    return (mean(avg_reward), n_fails/parameters["num_simulations_per_merge"])
+    
+    push!(avg_reward, mean(local_array))
 end
+
+
+function simulation_dict(edges::Dict{Int8, Dict{Int8, Float64}}, route::Array{Int8,1}, route_reward::Float64, parameters)
+    fails = Atomic{Int64}(0)
+    avg_reward = []
+    @threads for _ in 1:4
+        single_simulation_dict(edges, route, route_reward, parameters, fails, avg_reward)
+    end
+    avg_reward = vcat(avg_reward...)
+    return (mean(avg_reward), fails.value / parameters["num_simulations_per_merge"])              
+end
+
 
 
 function reorder_rl_dict(rl_dict, beta)
