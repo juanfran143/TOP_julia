@@ -110,7 +110,7 @@ function get_stochastic_solution_br(rl_dic::OrderedDict{Array{Int64,1}, Array{Fl
     
     rl_dic_max = OrderedDict{Array{Int64,1}, Array{Float64,1}}()
     for (key, value) in rl_dic
-        if length(rl_dic_max) >= parameters["n_vehicles"]*1000
+        if length(rl_dic_max) >= parameters["n_vehicles"] *10000
             break
         end
         rl_dic_max[key] = value

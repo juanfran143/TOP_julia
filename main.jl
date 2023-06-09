@@ -39,7 +39,7 @@ function main()
             "num_iterations_stochastic_solution" => parse(Int, num_iterations_stochastic_solution),
             "beta_stochastic_solution" => parse(Float64, beta_stochastic_solution)
         )
-        det_reward, stochastic_reward = algo_time(txt, Int16(60))
+        det_reward, stochastic_reward = algo_time(txt, Int16(10))
         write(file, txt["instance"],";",string(txt["num_simulations_per_merge"]),";",string(txt["max_simulations_per_route"]),";",
         string(txt["max_reliability_to_merge_routes"]),";",string(txt["max_percentaje_of_distance_to_do_simulations"]),";",
         string(txt["num_iterations_stochastic_solution"]),";",string(txt["beta_stochastic_solution"]),";",string(det_reward),";",string(stochastic_reward),"\n")

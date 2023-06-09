@@ -53,6 +53,40 @@ function calculate_savings_dict(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{I
     return sorted_savings_dict
 end
 
+function calculate_savings_dict_vecinos(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{Int8, Float64}}, alpha:: Float16,parameters)
+        savings_dict = Dict{Tuple{Int, Int}, Float64}()
+
+        depot = nodes[1]
+        n = length(nodes)
+        last_node = nodes[n]
+        dictionary_dist_neight= Dict{Int16, Float64}();
+        for i in 2:n-1
+            neight_dist_list =[]
+            for j in 2:n-1
+                push!(neight_dist_list,edge_dist(edges, nodes[i].id, nodes[j].id))
+            end
+            dictionary_dist_neight[i] = Float64(sort(neight_dist_list)[8])
+
+        end
+            
+
+
+        for i in 2:n-1
+            # count = 0
+            for j in 2:n-1
+                if i != j && dictionary_dist_neight[Int16(i)] >= edge_dist(edges, nodes[i].id, nodes[j].id) &&  edge_dist(edges, nodes[i].id, nodes[j].id) <= parameters["capacity"] - edge_dist(edges, depot.id, nodes[j].id) - edge_dist(edges,nodes[i].id, last_node.id)
+                    # count+=1
+                    saving = edge_dist(edges, depot.id, nodes[j].id) + edge_dist(edges, nodes[i].id, nodes[length(nodes)].id) - edge_dist(edges, nodes[i].id, nodes[j].id)
+                    savings_dict[(i, j)] = saving*alpha+(1-alpha)*(nodes[i].reward+nodes[j].reward)
+                end
+            end
+            # println(i,'/',count)
+        end
+        sorted_savings_dict = sort(collect(savings_dict), by = x -> x[2], rev = true)
+        sorted_savings_dict = OrderedDict(kv[1] => kv[2] for kv in sorted_savings_dict)
+        return sorted_savings_dict
+end
+
 function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Float64}}, routes::Dict{Int, Route}, max_distance::Float64, 
     rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, parameters)
     route1 = routes[Node1.route_id]
@@ -273,11 +307,10 @@ function algo_time(txt::Dict, time::Int16)
         "alpha_candidates" => [0.3, 0.4, 0.5, 0.6, 0.7],
         "beta_cancidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
         )
-
     edges = precalculate_distances(nodes::Dict{Int64, Node})
     list_savings_dict_alpha = Dict{Float16,OrderedDict{Tuple{Int, Int}, Float64}}()
     for i in parameters["alpha_candidates"]
-        list_savings_dict_alpha[Float16(i)] = calculate_savings_dict(nodes, edges, Float16(i))
+        list_savings_dict_alpha[Float16(i)] = calculate_savings_dict_vecinos(nodes, edges, Float16(i),parameters)
     end
 
     best_reward = 0
@@ -333,5 +366,6 @@ function algo_time(txt::Dict, time::Int16)
     det_reward = sum(i.reward for i in best_route)
     # println("Best deterministic routes reward: ", best_route)
     print(best_reward)
+    # print(Param_dict)
     return det_reward, stochastic_reward
 end

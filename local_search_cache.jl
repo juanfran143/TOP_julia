@@ -86,37 +86,3 @@ function improveWithCache(cache::Dict, newSol, edges, rl_dic, parameters)
 
     return newSol
 end
-
-function main()
-
-    n_vehicles, capacity, nodes = parse_txt("C:/Users/jfg14/OneDrive/Documentos/GitHub/TOP_julia/Instances/Set_64_234/p6.2.g.txt")
-
-    parameters = Dict(
-        # Problem
-        "start_node" => 1,
-        "last_node" => length(nodes),
-        "n_vehicles" => n_vehicles,
-        "capacity" => capacity,
-        "nodes" => nodes,
-        
-        # simulations
-        "var_lognormal" => 0.05,
-        "large_simulation_simulations" => 10000,
-
-        # RL_DICT
-        "num_simulations_per_merge" => 100,
-        "max_simulations_per_route" => 200,
-        "max_reliability_to_merge_routes" => 0.3,
-        "max_percentaje_of_distance_to_do_simulations" => 3/5,
-
-        # Stochastic solution
-        "num_iterations_stochastic_solution" => 50,
-        "beta_stochastic_solution" => 0.4
-        )
-
-    edges = precalculate_distances(nodes::Dict{Int64, Node})
-
-    newSol = Route[Route(Node[Node(1, 0.0, -7.0, 0.0, 1), Node(14, 2.0, -3.0, 18.0, 4), Node(20, 3.0, -2.0, 24.0, 4), Node(34, 3.0, 0.0, 30.0, 4), Node(27, 4.0, -1.0, 30.0, 4), Node(42, 4.0, 1.0, 30.0, 4), Node(48, 3.0, 2.0, 24.0, 4)], 20.23334547203386, 198.0), Route(Node[Node(1, 0.0, -7.0, 0.0, 1), Node(8, -1.0, -4.0, 12.0, 7), Node(18, -1.0, -2.0, 18.0, 7), Node(25, 0.0, -1.0, 18.0, 7), Node(40, 0.0, 1.0, 18.0, 7), Node(47, 1.0, 2.0, 18.0, 7), Node(57, 1.0, 4.0, 12.0, 7), Node(64, 0.0, 7.0, 0.0, 1)], 15.15298244508295, 96.0)]
-    cache = Dict()
-    improveWithCache(cache::Dict, newSol, edges)
-end

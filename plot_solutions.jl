@@ -36,13 +36,20 @@ end
 function plot_routes_Sto(nodes,routes)
     list_x = []
     list_y = []
+    rewards = []
     for key in collect(keys(nodes))
         push!(list_x,(nodes[key].x))
         push!(list_y,(nodes[key].y))
+        push!(rewards,(nodes[key].reward))
     end
     p = plot()
 
     scatter!(p,list_x,list_y,color=:black, label="Nodes")
+
+    # for i in 1:length(list_x)
+    #     annotate!(p,list_x[i],list_y[i] + 0.2, text(string(rewards[i]) ))
+    # end
+    
     colors = [:red,:blue,:green,:yellow]
     route_id=1
     for route in routes
@@ -60,6 +67,10 @@ function plot_routes_Sto(nodes,routes)
             c=c+1
         end  
         route_id =route_id+1  
+    end
+    display(p)
+    for i in 1:length(list_x)
+        annotate!(p,list_x[i],list_y[i] + 0.2, text(string(rewards[i]) ))
     end
     display(p)
 end
