@@ -14,6 +14,7 @@ struct Route
     reward::Float64
 end
 
-function Base.copy(s::Route)
-    return Route(s.route, s.dist, s.reward)
+function Base.deepcopy(r::Route)
+    new_route = deepcopy(r.route)
+    return Route(new_route, r.dist, r.reward)
 end
