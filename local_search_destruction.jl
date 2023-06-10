@@ -9,17 +9,34 @@ include("reactive_Search.jl")
 include("local_search_cache.jl")
 include("plot_solutions.jl")
 
+function constructive_with_BR(route, edges::Dict{Int8, Dict{Int8, Float64}}, beta, savings, 
+    rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, parameters, restricted_nodes)
+    savings = reorder_saving_list(savings, beta)
+    #TODO coger aquellos savings vinculados únicamente con el nodo de la ruta
+    # Route: 1-2-3-4-5      - 12, coger los savings vinculados con el 5
+    for key in keys(savings)
+        if haskey(parameters["nodes"], key[2]) && !(key[2] in restricted_nodes) && route[end].id == key[1]
+            NodeX = parameters["nodes"][key[1]]
+            NodeY = parameters["nodes"][key[2]]
+            merge_routes(NodeX, NodeY, edges, routes, parameters["capacity"], rl_dic, parameters)
+        end
+    end
+    sorted_routes = sort(collect(routes), by = x -> x[2].reward, rev = true)
+    sorted_routes = Dict(kv[1] => kv[2] for kv in sorted_routes)
+
+    return route
+end
+
 function destroysolution(route::Route, edges, n_destroy_nodes::Int64)
     sum = 0
     for i = 0:n_destroy_nodes
-        #route.route[1:end-n_destroy_nodes]
         route.route[1:end-n_destroy_nodes]
         sum += edge_dist(edges, route.route[1:end-i].id, route.route[1:end-(i+1)].id)
 
     return Route(route.route[1:end-n_destroy_nodes], route.dist - sum, route.reward)
 end
 
-function destruction(sol::Route[], edges, p::Float64)
+function destruction(sol::Route[], edges, p::Float64, beta, savings, rl_dic, parameters)
     restricted_nodes = []
     for i = 1:length(sol)
         restricted_nodes  = vcat(restricted_nodes, [j.id for j in sol[i].route])
