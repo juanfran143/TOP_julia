@@ -15,7 +15,7 @@ function constructive_with_BR(route, edges::Dict{Int8, Dict{Int8, Float64}}, bet
     #TODO coger aquellos savings vinculados únicamente con el nodo de la ruta
     # Route: 1-2-3-4-5      - 12, coger los savings vinculados con el 5
     for key in keys(savings)
-        if haskey(parameters["nodes"], key[2]) && !(key[2] in restricted_nodes) && route[end].id == key[1]
+        if haskey(parameters["nodes"], key[2]) && !(key[2] in restricted_nodes) && route[end-1].id == key[1]
             NodeX = parameters["nodes"][key[1]]
             NodeY = parameters["nodes"][key[2]]
             merge_routes(NodeX, NodeY, edges, route, parameters["capacity"], rl_dic, parameters)
@@ -50,11 +50,13 @@ function destruction(sol::Route[], edges, p::Float64, beta, savings, rl_dic, par
         destroysol = destroysolution(detroysol, edges, nRoutesDestroy)
 
         for _ in 1:20
-            sol = constructive_with_BR(route, edges, beta, savings,rl_dic, parameters, restricted_nodes)
-            if best_sol.reward < sol.reward
-                
+            route = constructive_with_BR(destroysol, edges, beta, savings,rl_dic, parameters, restricted_nodes)
+            if best_sol.reward < route.reward
+                best_sol = deepcopy(route)
             end
         end
+        
+    return best_sol
 end
 
 
