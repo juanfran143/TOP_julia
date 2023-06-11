@@ -1,3 +1,13 @@
 # Instance num_simulations_per_merge max_simulations_per_route max_reliability_to_merge_routes max_percentaje_of_distance_to_do_simulations num_iterations_stochastic_solution beta_stochastic_solution function
-Instances/Set_100_234/p4.2.t.txt 100 200 0.3 3/5 500 0.3 antonios_function
-
+Instances/Set_64_234/p6.2.n.txt 100 200 0.3 3/5 500 0.3 antonios_function 30
+Instances/Set_64_234/p6.2.n.txt 100 200 0.3 3/5 500 0.01 antonios_function 30
+Instances/Set_64_234/p6.2.n.txt 100 200 0.3 3/5 500 0.7 antonios_function 30
+Instances/Set_64_234/p6.2.n.txt 100 200 0.3 3/5 500 0.6 antonios_function 30
+Instances/Set_64_234/p6.2.n.txt 100 200 0.3 3/5 500 0.5 antonios_function 30
+Instances/Set_64_234/p6.2.n.txt 100 200 0.3 3/5 5000 0.3 antonios_function 30
+Instances/Set_64_234/p6.2.n.txt 100 200 0.3 3/5 500 0.3 antonios_function 3
+Instances/Set_64_234/p6.2.n.txt 100 200 0.3 3/5 500 0.01 antonios_function 3
+Instances/Set_64_234/p6.2.n.txt 100 200 0.3 3/5 500 0.7 antonios_function 3
+Instances/Set_64_234/p6.2.n.txt 100 200 0.3 3/5 500 0.6 antonios_function 3
+Instances/Set_64_234/p6.2.n.txt 100 200 0.3 3/5 500 0.5 antonios_function 3
+Instances/Set_64_234/p6.2.n.txt 100 200 0.3 3/5 5000 0.3 antonios_function 3

@@ -18,7 +18,7 @@ function constructive_with_BR(route, edges::Dict{Int8, Dict{Int8, Float64}}, bet
         if haskey(parameters["nodes"], key[2]) && !(key[2] in restricted_nodes) && route[end].id == key[1]
             NodeX = parameters["nodes"][key[1]]
             NodeY = parameters["nodes"][key[2]]
-            merge_routes(NodeX, NodeY, edges, routes, parameters["capacity"], rl_dic, parameters)
+            merge_routes(NodeX, NodeY, edges, route, parameters["capacity"], rl_dic, parameters)
         end
     end
     sorted_routes = sort(collect(routes), by = x -> x[2].reward, rev = true)
@@ -31,9 +31,10 @@ function destroysolution(route::Route, edges, n_destroy_nodes::Int64)
     sum = 0
     for i = 0:n_destroy_nodes
         route.route[1:end-n_destroy_nodes]
-        sum += edge_dist(edges, route.route[1:end-i].id, route.route[1:end-(i+1)].id)
+        sum += edge_dist(edges, route.route[end-i].id, route.route[end-(i+1)].id)
+    sum += edge_dist(edges, route.route[end-i].id, route.route[end].id)
 
-    return Route(route.route[1:end-n_destroy_nodes], route.dist - sum, route.reward)
+    return Route(vcat(route.route[1:end-n_destroy_nodes], route.route[end]), route.dist - sum, route.reward)
 end
 
 function destruction(sol::Route[], edges, p::Float64, beta, savings, rl_dic, parameters)
@@ -43,11 +44,17 @@ function destruction(sol::Route[], edges, p::Float64, beta, savings, rl_dic, par
 
     for i = 1:length(sol)
         detroysol = deepcopy(sol[i])
-        aux_sol = deepcopy(sol[i])
+        best_sol = deepcopy(sol[i])
 
-        nRoutesDestroy = int((length(detroysol.route)*p));
+        nRoutesDestroy = int(length(detroysol.route)*p);
         destroysol = destroysolution(detroysol, edges, nRoutesDestroy)
 
+        for _ in 1:20
+            sol = constructive_with_BR(route, edges, beta, savings,rl_dic, parameters, restricted_nodes)
+            if best_sol.reward < sol.reward
+                
+            end
+        end
 end
 
 
