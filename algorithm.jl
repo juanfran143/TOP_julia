@@ -74,7 +74,7 @@ function calculate_savings_dict_vecinos(nodes::Dict{Int, Node}, edges::Dict{Int8
         for i in 2:n-1
             # count = 0
             for j in 2:n-1
-                if i != j && dictionary_dist_neight[Int16(i)] >= edge_dist(edges, nodes[i].id, nodes[j].id) &&  edge_dist(edges, nodes[i].id, nodes[j].id) <= parameters["capacity"] - edge_dist(edges, depot.id, nodes[j].id) - edge_dist(edges,nodes[i].id, last_node.id)
+                if i != j && dictionary_dist_neight[Int16(i)] >= edge_dist(edges, nodes[i].id, nodes[j].id) &&  edge_dist(edges, nodes[i].id, nodes[j].id) <= parameters["capacity"] - edge_dist(edges, depot.id, nodes[i].id) - edge_dist(edges,nodes[j].id, last_node.id)
                     # count+=1
                     saving = edge_dist(edges, depot.id, nodes[j].id) + edge_dist(edges, nodes[i].id, nodes[length(nodes)].id) - edge_dist(edges, nodes[i].id, nodes[j].id)
                     savings_dict[(i, j)] = saving*alpha+(1-alpha)*(nodes[i].reward+nodes[j].reward)
