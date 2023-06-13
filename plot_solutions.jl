@@ -37,10 +37,12 @@ function plot_routes_Sto(nodes,routes)
     list_x = []
     list_y = []
     rewards = []
+    ids=[]
     for key in collect(keys(nodes))
         push!(list_x,(nodes[key].x))
         push!(list_y,(nodes[key].y))
         push!(rewards,(nodes[key].reward))
+        push!(ids,(nodes[key].id))
     end
     p = plot()
 
@@ -71,6 +73,8 @@ function plot_routes_Sto(nodes,routes)
     display(p)
     for i in 1:length(list_x)
         annotate!(p,list_x[i],list_y[i] + 0.2, text(string(rewards[i]) ))
+        # annotate!(p,list_x[i],list_y[i] + 0.2, text(string(ids[i]) ))
+
     end
     display(p)
 end

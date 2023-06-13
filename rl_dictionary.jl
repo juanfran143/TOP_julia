@@ -3,7 +3,7 @@ using Random, Distributions, Combinatorics, DataStructures, Distributed, Base.Th
 # addprocs(4)
 
 function modify_value_lognormal(mean::Float64, variance::Float64)
-    mu = log(mean^2 / sqrt(mean^2 + variance))
+    mu = log(mean) - 1/2 *log( sqrt(1 + variance/mean^2))
     sigma = sqrt(log(1 + (variance / mean^2)))
     lognormal_dist = LogNormal(mu, sigma)
     return rand(lognormal_dist)
@@ -110,12 +110,12 @@ function get_stochastic_solution_br(rl_dic::OrderedDict{Array{Int64,1}, Array{Fl
     
     rl_dic_max = OrderedDict{Array{Int64,1}, Array{Float64,1}}()
     for (key, value) in rl_dic
-        if length(rl_dic_max) >= parameters["n_vehicles"] *10000
-            break
-        end
+        # if length(rl_dic_max) >= parameters["n_vehicles"] *10000
+        #     break
+        # end
         rl_dic_max[key] = value
     end
-    
+        
     """
     for kv in rl_dic_max
         println("Key: ", kv[1], ", Value: ", kv[2])
