@@ -63,21 +63,22 @@ function calculate_savings_dict_vecinos(nodes::Dict{Int, Node}, edges::Dict{Int8
         for i in 2:n-1
             neight_dist_list =[]
             for j in 2:n-1
-                push!(neight_dist_list,edge_dist(edges, nodes[i].id, nodes[j].id))
+                if i!=j
+                    push!(neight_dist_list,edge_dist(edges, nodes[i].id, nodes[j].id))
+                end
             end
-            dictionary_dist_neight[i] = Float64(sort(neight_dist_list)[8])
+            dictionary_dist_neight[i] = Float64(sort(neight_dist_list)[12])
 
         end
-            
-
 
         for i in 2:n-1
-            # count = 0
+            count = 0
             for j in 2:n-1
-                if i != j && dictionary_dist_neight[Int16(i)] >= edge_dist(edges, nodes[i].id, nodes[j].id) &&  edge_dist(edges, nodes[i].id, nodes[j].id) <= parameters["capacity"] - edge_dist(edges, depot.id, nodes[j].id) - edge_dist(edges,nodes[i].id, last_node.id)
-                    # count+=1
+                if i != j && dictionary_dist_neight[Int16(i)] >= edge_dist(edges, nodes[i].id, nodes[j].id) #&&  edge_dist(edges, nodes[i].id, nodes[j].id) <= parameters["capacity"] - edge_dist(edges, depot.id, nodes[i].id) - edge_dist(edges,nodes[j].id, last_node.id)
+                    count+=1
                     saving = edge_dist(edges, depot.id, nodes[j].id) + edge_dist(edges, nodes[i].id, nodes[length(nodes)].id) - edge_dist(edges, nodes[i].id, nodes[j].id)
                     savings_dict[(i, j)] = saving*alpha+(1-alpha)*(nodes[i].reward+nodes[j].reward)
+                    # println(i,j)
                 end
             end
             # println(i,'/',count)
@@ -279,7 +280,6 @@ function algo_time(txt::Dict, time::Int16)
 
     #return n_nodes, n_vehicles, capacity, nodes
     n_vehicles, capacity, nodes = parse_txt(string(txt["instance"]))
-
     parameters = Dict(
         # Problem
         "start_node" => 1,
@@ -326,7 +326,7 @@ function algo_time(txt::Dict, time::Int16)
     while now()-start_time<Second(duration_senconds)
 
         (alpha,beta) = choose_with_probability(params,no_null_index, cum_probabilities)
-
+        
         original_savings=list_savings_dict_alpha[alpha]
 
         savings = copy(original_savings)
@@ -355,8 +355,15 @@ function algo_time(txt::Dict, time::Int16)
     println("Número de iteraciones: ", iter)
     println("")
     rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
+    # Select the first 100 key-value pairs
+    keys_values = zip(collect(keys(rl_dic_sorted))[1:100], collect(values(rl_dic_sorted))[1:100])
+
+    # Print the selected key-value pairs
+    for (key, value) in keys_values
+        println("Key: $key, Value: $value")
+    end
     stochastic_solution = get_stochastic_solution_br(rl_dic_sorted, parameters)
-    
+    println(stochastic_solution)
     plot_routes_Sto(nodes,stochastic_solution)
 
     stochastic_reward = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution)
@@ -366,6 +373,5 @@ function algo_time(txt::Dict, time::Int16)
     det_reward = sum(i.reward for i in best_route)
     # println("Best deterministic routes reward: ", best_route)
     print(best_reward)
-    # print(Param_dict)
     return det_reward, stochastic_reward
 end
