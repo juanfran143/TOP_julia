@@ -11,6 +11,7 @@ include("simulation.jl")
 include("rl_dictionary.jl")
 include("reactive_Search.jl")
 include("local_search_cache.jl")
+include("local_search_destruction.jl")
 include("plot_solutions.jl")
 
 function dummy_solution(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, last_node)
@@ -65,7 +66,8 @@ function calculate_savings_dict_vecinos(nodes::Dict{Int, Node}, edges::Dict{Int8
             for j in 2:n-1
                 push!(neight_dist_list,edge_dist(edges, nodes[i].id, nodes[j].id))
             end
-            dictionary_dist_neight[i] = Float64(sort(neight_dist_list)[8])
+            #TODO Cambiar el 8 por un parámetro
+            dictionary_dist_neight[i] = Float64(sort(neight_dist_list)[16])
 
         end
             
@@ -333,7 +335,13 @@ function algo_time(txt::Dict, time::Int16)
 
         reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
         
+        # 1º LS
         routes = improveWithCache(cache, routes, edges, rl_dic, parameters)
+        
+        # 2º LS
+        savings = copy(original_savings)
+        #TODO cambiar 0.4 por un parámetro
+        routes = destruction(routes, edges, 0.7, beta, savings, rl_dic, parameters)
 
         if reward > best_reward
             best_reward = reward
