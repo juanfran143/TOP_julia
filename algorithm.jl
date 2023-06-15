@@ -1,4 +1,4 @@
-using Random, Distributions, Combinatorics, DataStructures, Dates, Plots, Base.Threads
+using Random, Distributions, Combinatorics, DataStructures, Dates, Plots, Base.Threads, JuMP,GLPK
 
 seed = 123
 Random.seed!(seed)
@@ -12,6 +12,7 @@ include("rl_dictionary.jl")
 include("reactive_Search.jl")
 include("local_search_cache.jl")
 include("plot_solutions.jl")
+include("iterativeMIP.jl")
 
 function dummy_solution(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, last_node)
     routes = Dict{Int, Route}()
@@ -69,8 +70,6 @@ function calculate_savings_dict_vecinos(nodes::Dict{Int, Node}, edges::Dict{Int8
 
         end
             
-
-
         for i in 2:n-1
             # count = 0
             for j in 2:n-1
@@ -180,7 +179,7 @@ function heuristic_with_BR(edges::Dict{Int8, Dict{Int8, Float64}}, beta, savings
 end
 
 function antonios_function(iter)
-    return 2^((iter+1)/1000)
+    return 1#((iter+1)/1000)
 end
 
 function algo(txt::Dict)
@@ -218,7 +217,7 @@ function algo(txt::Dict)
 
     edges = precalculate_distances(nodes::Dict{Int64, Node})
     list_savings_dict_alpha = Dict{Float16,OrderedDict{Tuple{Int, Int}, Float64}}()
-    for i=1:9
+    for i=3:7
         list_savings_dict_alpha[Float16(i/10)] = calculate_savings_dict(nodes, edges, Float16(i/10))
     end
 
@@ -355,10 +354,10 @@ function algo_time(txt::Dict, time::Int16)
     println("Número de iteraciones: ", iter)
     println("")
     rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
+    println(length(rl_dic_sorted))
     stochastic_solution = get_stochastic_solution_br(rl_dic_sorted, parameters)
     
     plot_routes_Sto(nodes,stochastic_solution)
-
     stochastic_reward = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution)
     println("El reward estocástico es: ",sum([v[2][1] for v in stochastic_solution]))
     println("El reward real es: ", stochastic_reward)

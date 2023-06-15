@@ -110,9 +110,9 @@ function get_stochastic_solution_br(rl_dic::OrderedDict{Array{Int64,1}, Array{Fl
     
     rl_dic_max = OrderedDict{Array{Int64,1}, Array{Float64,1}}()
     for (key, value) in rl_dic
-        if length(rl_dic_max) >= parameters["n_vehicles"] *10000
-            break
-        end
+        # if length(rl_dic_max) >= parameters["n_vehicles"] *10000
+        #     break
+        # end
         rl_dic_max[key] = value
     end
     
@@ -122,6 +122,10 @@ function get_stochastic_solution_br(rl_dic::OrderedDict{Array{Int64,1}, Array{Fl
     end
     """
     best_pair = get_stochastic_solution_greedy(rl_dic_max, parameters["n_vehicles"])
+    # println(best_pair)
+    primeros_valores = [valor[1] for valor in values(rl_dic_max)]
+    iterative_MIP(keys(rl_dic_max),primeros_valores, parameters["n_vehicles"])
+
     best_reward = sum([v[2][1] for v in best_pair])
     #println("Best stochastic reward greedy: ", best_reward)
 
