@@ -11,7 +11,7 @@ include("algorithm.jl")
 function main()
     raw_data = readdlm("config.txt", '\n')
 
-    file = open("Output.txt", "w")
+    file = open("Output4.txt", "w")
 
     write(file, "Instancia;num_simulations_per_merge;max_simulations_per_route;max_reliability_to_merge_routes;max_percentaje_of_distance_to_do_simulations;num_iterations_stochastic_solution;beta_stochastic_solution;det_reward;stochastic_reward","\n")
     # Itera sobre cada línea en raw_data

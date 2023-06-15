@@ -67,7 +67,7 @@ function calculate_savings_dict_vecinos(nodes::Dict{Int, Node}, edges::Dict{Int8
                 push!(neight_dist_list,edge_dist(edges, nodes[i].id, nodes[j].id))
             end
             #TODO Cambiar el 8 por un parámetro
-            dictionary_dist_neight[i] = Float64(sort(neight_dist_list)[16])
+            dictionary_dist_neight[i] = Float64(sort(neight_dist_list)[8])
 
         end
             
@@ -307,7 +307,11 @@ function algo_time(txt::Dict, time::Int16)
         # Reactive 
         "function" => antonios_function,
         "alpha_candidates" => [0.3, 0.4, 0.5, 0.6, 0.7],
-        "beta_cancidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+        "beta_cancidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
+
+        #Parámetros LS-destructive
+        "p" =>0.2,
+        "NumIterBrInLS" => 5
         )
     edges = precalculate_distances(nodes::Dict{Int64, Node})
     list_savings_dict_alpha = Dict{Float16,OrderedDict{Tuple{Int, Int}, Float64}}()
@@ -340,8 +344,7 @@ function algo_time(txt::Dict, time::Int16)
         
         # 2º LS
         savings = copy(original_savings)
-        #TODO cambiar 0.4 por un parámetro
-        routes = destruction(routes, edges, 0.7, beta, savings, rl_dic, parameters)
+        routes = destruction(routes, edges, beta, savings, rl_dic, parameters)
 
         if reward > best_reward
             best_reward = reward
@@ -363,17 +366,28 @@ function algo_time(txt::Dict, time::Int16)
     println("Número de iteraciones: ", iter)
     println("")
     rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
-    stochastic_solution = get_stochastic_solution_br(rl_dic_sorted, parameters)
+
+    stochastic_solution = []
+    for _ = 1:5
+        rl_dic_aux = copy(rl_dic_sorted)
+        push!(stochastic_solution, get_stochastic_solution_br(rl_dic_aux, parameters))
+    end
     
-    plot_routes_Sto(nodes,stochastic_solution)
+    #plot_routes_Sto(nodes,stochastic_solution)
+    best_stochastic_reward = 0
+    for s in stochastic_solution
+        stochastic_reward = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], s)
+        println("El reward estocástico es: ",sum([v[2][1] for v in s]))
+        
+        if best_stochastic_reward < stochastic_reward
+            best_stochastic_reward = stochastic_reward
+        end
+    end
 
-    stochastic_reward = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution)
-    println("El reward estocástico es: ",sum([v[2][1] for v in stochastic_solution]))
-    println("El reward real es: ", stochastic_reward)
-
+    println("El reward real es: ", best_stochastic_reward)
     det_reward = sum(i.reward for i in best_route)
     # println("Best deterministic routes reward: ", best_route)
     print(best_reward)
     # print(Param_dict)
-    return det_reward, stochastic_reward
+    return det_reward, best_stochastic_reward
 end

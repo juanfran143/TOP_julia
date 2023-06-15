@@ -116,11 +116,20 @@ function get_stochastic_solution_br(rl_dic::OrderedDict{Array{Int64,1}, Array{Fl
         rl_dic_max[key] = value
     end
     
-    """
-    for kv in rl_dic_max
+    """ 
+    rl_print = OrderedDict{Array{Int64,1}, Array{Float64,1}}()
+    for (key, value) in rl_dic
+        if length(rl_print) >= parameters["n_vehicles"] *3
+            break
+        end
+        rl_print[key] = value
+    end
+
+    for kv in rl_print
         println("Key: ", kv[1], ", Value: ", kv[2])
     end
     """
+    
     best_pair = get_stochastic_solution_greedy(rl_dic_max, parameters["n_vehicles"])
     best_reward = sum([v[2][1] for v in best_pair])
     #println("Best stochastic reward greedy: ", best_reward)

@@ -40,8 +40,7 @@ function add_routes(Node2::Node, edges::Dict{Int8, Dict{Int8, Float64}}, route, 
     # 1.- edges(1, 2) +  edges(2, 3) + .... edges(4, 5)
     # 2.- route1.distance + - edges(3, 5) + edges(3, 4) + edges(4, 5)
     if join
-        merged_route_distance = route.dist + edge_dist(edges, route.route[end-1].id, Node2.id) + edge_dist(edges, Node2.id, route.route[end].id) 
-        - edge_dist(edges, route.route[end-1].id, route.route[end].id)
+        merged_route_distance = route.dist + edge_dist(edges, route.route[end-1].id, Node2.id) + edge_dist(edges, Node2.id, route.route[end].id) - edge_dist(edges, route.route[end-1].id, route.route[end].id)
   
         # Verificar si la distancia total de la nueva ruta fusionada está dentro del límite de distancia máximo
         if merged_route_distance <= max_distance
@@ -53,11 +52,10 @@ function add_routes(Node2::Node, edges::Dict{Int8, Dict{Int8, Float64}}, route, 
 
                 rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, merged_route_distance, merged_route_reward]
             end
-            return true
-        else
-            return false
+            return route, true
         end
     end
+    return route, false
 end
 
 function constructive_with_BR_destructive(route, edges::Dict{Int8, Dict{Int8, Float64}}, beta, savings, 
@@ -65,14 +63,19 @@ function constructive_with_BR_destructive(route, edges::Dict{Int8, Dict{Int8, Fl
     savings = reorder_saving_list(savings, beta)
     #TODO coger aquellos savings vinculados únicamente con el nodo de la ruta
     # Route: 1-2-3-4-5      - 12, coger los savings vinculados con el 5
-    for key in keys(savings)
-        if haskey(parameters["nodes"], key[2]) && !(key[2] in restricted_nodes) && route.route[end-1].id == key[1]
-            NodeY = parameters["nodes"][key[2]]
-            merge = add_routes(NodeY, edges, route, parameters["capacity"], rl_dic, parameters)
+
+    key = collect(keys(savings)) 
+    i=1
+    while i <= length(key)
+        if haskey(parameters["nodes"], key[i][2]) && !(key[i][2] in restricted_nodes) && route.route[end-1].id == key[i][1]
+            NodeY = parameters["nodes"][key[i][2]]
+            route, merge = add_routes(NodeY, edges, route, parameters["capacity"], rl_dic, parameters)
             if merge
-                push!(restricted_nodes, NodeY)
+                push!(restricted_nodes, NodeY.id)
+                i = 0
             end
         end
+        i += 1
     end
     #sorted_routes = sort(route, by = x -> x.reward, rev = true)
 
@@ -90,32 +93,34 @@ function destroysolution(route::Route, edges, n_destroy_nodes::Int64)
     sum -= edge_dist(edges, route.route[end-(n_destroy_nodes+1)].id, route.route[end].id)
     non_reward -= route.route[end-(n_destroy_nodes+1)].reward 
 
-    return Route(vcat(route.route[1:end-n_destroy_nodes], route.route[end]), route.dist - sum, route.reward-non_reward)
+    return Route(vcat(route.route[1:end-(n_destroy_nodes+1)], route.route[end]), route.dist - sum, route.reward-non_reward)
 end
 
-function destruction(sol::Vector{Route}, edges, p::Float64, beta, original_savings, rl_dic, parameters)
+function destruction(sol::Vector{Route}, edges, beta, original_savings, rl_dic, parameters)
     restricted_nodes = []
     for i = 1:length(sol)
         restricted_nodes  = vcat(restricted_nodes, [j.id for j in sol[i].route])
     end
-
+    best_list_sol = []
     for i = 1:length(sol)
         detroysol = deepcopy(sol[i])
         best_sol = deepcopy(sol[i])
 
-        nRoutesDestroy = floor(Int, length(detroysol.route)*p)
+        nRoutesDestroy = floor(Int, length(detroysol.route)*parameters["p"])
         destroysol = destroysolution(detroysol, edges, nRoutesDestroy)
-
-        for _ in 1:20
+        
+        #TODO Meter el 50 como parámetro
+        for _ in 1:parameters["NumIterBrInLS"]
             savings = copy(original_savings)
             route = constructive_with_BR_destructive(destroysol, edges, beta, savings, rl_dic, parameters, restricted_nodes)
             if best_sol.reward < route.reward
                 best_sol = deepcopy(route)
             end
         end
+        push!(best_list_sol, best_sol)
     end
 
-    return best_sol
+    return best_list_sol
 end
 
 
