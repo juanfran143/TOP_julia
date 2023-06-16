@@ -34,7 +34,7 @@ function modify_param_dictionary_RS(Param_dict,k)
     # Refresh probabilites with RS formula and reestart best values at 0
     for key in keys(Param_dict)
         Param_dict[key][1] = (Param_dict[key][2]^k)/sum_q
-        Param_dict[key][2] = 0 
+        # Param_dict[key][2] = 0 
     end
     params  = collect(keys(Param_dict))
     probabilities = [valor[1] for valor in values(Param_dict)]
