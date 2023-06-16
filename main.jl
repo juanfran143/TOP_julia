@@ -12,13 +12,16 @@ include("algorithm.jl")
 include("local_search_destruction.jl")
 
 function main()
+    name_output = "Output.txt"
     raw_data = readdlm("config.txt", '\n')
 
-    file = open("Output_ComparativaLS.txt", "w")
+    file = open(name_output, "w")
 
-    write(file, "Instancia;num_simulations_per_merge;max_simulations_per_route;max_reliability_to_merge_routes;max_percentaje_of_distance_to_do_simulations;num_iterations_stochastic_solution;beta_stochastic_solution;det_reward;stochastic_reward","\n")
+    write(file, "Instancia;seed;num_simulations_per_merge;max_simulations_per_route;max_reliability_to_merge_routes;max_percentaje_of_distance_to_do_simulations;det_reward;stochastic_reward","\n")
+    close(file) 
     # Itera sobre cada línea en raw_data
     for line in eachrow(raw_data)
+        file = open(name_output, "a")
         str = line[1]
         str_splitted = split(str)
         if startswith(line[1], "#")
@@ -26,28 +29,40 @@ function main()
         end
 
         # Separa los datos en sus respectivos parámetros
-        instance, num_simulations_per_merge, max_simulations_per_route, max_reliability_to_merge_routes, 
-        max_percentaje_of_distance_to_do_simulations, num_iterations_stochastic_solution, 
-        beta_stochastic_solution, function_name, time, LS_destroyer = str_splitted
+        instance, seed, num_simulations_per_merge, max_simulations_per_route, max_reliability_to_merge_routes, 
+        max_percentaje_of_distance_to_do_simulations, function_name, time, LS_destroyer, LS_2_opt, simulations_large_simulation, variance, p, NumIterBrInLS = str_splitted
+        
+        Random.seed!(parse(Int, seed))
 
         # Crea un nuevo diccionario para los parámetros de esta línea
         println(instance)
         println("")
         txt = Dict(
             "instance" => instance,
+            "seed" => seed,
             "num_simulations_per_merge" => parse(Int, num_simulations_per_merge),
             "max_simulations_per_route" => parse(Int, max_simulations_per_route),
             "max_reliability_to_merge_routes" => parse(Float64, max_reliability_to_merge_routes),
             "max_percentaje_of_distance_to_do_simulations" => eval(Meta.parse(max_percentaje_of_distance_to_do_simulations)),
-            "num_iterations_stochastic_solution" => parse(Int, num_iterations_stochastic_solution),
-            "beta_stochastic_solution" => parse(Float64, beta_stochastic_solution),
-            "LS_destroyer" => parse(Bool, LS_destroyer)
+            "function_name" => function_name,
+
+            "LS_destroyer" => parse(Bool, LS_destroyer),
+            "LS_2_opt" => parse(Bool, LS_2_opt),
+
+
+            "simulations_large_simulation" => parse(Int, simulations_large_simulation),
+            "variance" => parse(Float64, variance),
+
+            "p" => parse(Float64, p),
+            "NumIterBrInLS" => parse(Int, NumIterBrInLS)
+
         )
         
         det_reward, stochastic_reward = algo_time(txt, Int16(parse(Int, time)))
-        write(file, txt["instance"],";",string(txt["num_simulations_per_merge"]),";",string(txt["max_simulations_per_route"]),";",
+        println(file, txt["instance"],";", txt["seed"],";",string(txt["num_simulations_per_merge"]),";",string(txt["max_simulations_per_route"]),";",
         string(txt["max_reliability_to_merge_routes"]),";",string(txt["max_percentaje_of_distance_to_do_simulations"]),";",
-        string(txt["num_iterations_stochastic_solution"]),";",string(txt["beta_stochastic_solution"]),";",string(det_reward),";",string(stochastic_reward),"\n")
+        string(det_reward),";",string(stochastic_reward))
+        close(file) 
     end  
 end
 

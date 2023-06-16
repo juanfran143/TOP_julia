@@ -1,9 +1,5 @@
 using Random, Distributions, Combinatorics, DataStructures, Dates, Plots, Base.Threads, JuMP,GLPK
 
-seed = 123
-Random.seed!(seed)
-
-
 include("structs.jl")
 include("parse.jl")
 include("get_edges.jl")
@@ -143,6 +139,7 @@ function reorder_saving_list(savings::OrderedDict{Tuple{Int, Int}, Float64}, bet
     keys_list = collect(keys(savings))
     while !isempty(savings)
         position = Int(floor((log(rand()) / log(1 - beta))) % length(savings)) + 1
+        print(position)
         key = keys_list[position]
         aux[key] = pop!(savings, key)
         deleteat!(keys_list, position)
@@ -198,8 +195,8 @@ function algo_time(txt::Dict, time::Int16)
         "nodes" => nodes,
         
         # simulations
-        "var_lognormal" => 0.05,
-        "large_simulation_simulations" => 1000,
+        "var_lognormal" => txt["variance"],
+        "large_simulation_simulations" => txt["simulations_large_simulation"],
 
         # RL_DICT
         "num_simulations_per_merge" => txt["num_simulations_per_merge"],
@@ -207,19 +204,15 @@ function algo_time(txt::Dict, time::Int16)
         "max_reliability_to_merge_routes" => txt["max_reliability_to_merge_routes"],
         "max_percentaje_of_distance_to_do_simulations" => txt["max_percentaje_of_distance_to_do_simulations"],
 
-        # Stochastic solution
-        "num_iterations_stochastic_solution" => txt["num_iterations_stochastic_solution"],
-        "beta_stochastic_solution" => txt["beta_stochastic_solution"],
-
         # Reactive 
-        "function" => antonios_function,
+        "function" => txt["function_name"],
         "alpha_candidates" => [0.3, 0.4, 0.5, 0.6, 0.7],
         "beta_cancidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
 
         #LS Destoyer
         "LS_destroyer" => txt["LS_destroyer"],
-        "p" => 0.2,
-        "NumIterBrInLS" => 5
+        "p" => txt["p"],
+        "NumIterBrInLS" => txt["NumIterBrInLS"]
         )
     edges = precalculate_distances(nodes::Dict{Int64, Node})
     list_savings_dict_alpha = Dict{Float16,OrderedDict{Tuple{Int, Int}, Float64}}()
@@ -264,9 +257,10 @@ function algo_time(txt::Dict, time::Int16)
         if reward > Param_dict[(alpha,beta)][2] && iter <= 5000
             Param_dict[(alpha,beta)][2]=reward
         end
-            
+        
+        # TODO: ¿Quieres parametrizar también estos valores? 
         if iter % 1000 == 999 && iter <= 5000
-            k = parameters["function"](iter)
+            k = exce(f'{parameters["function"]}(iter)')
             params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
         end
         iter += 1
@@ -279,7 +273,7 @@ function algo_time(txt::Dict, time::Int16)
     println("Tamaño del Dic ", length(rl_dic_sorted) ,"\n")
     stochastic_solution, stochastic_reward = get_stochastic_solution_br(rl_dic_sorted, parameters)
     plot_routes_Sto(nodes,stochastic_solution)
-    stochastic_reward_large = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution)
+    stochastic_reward_large = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution, parameters["var_lognormal"])
     println("El reward estocástico es: ",stochastic_reward)
     println("El reward real es: ", stochastic_reward_large)
 

@@ -7,6 +7,7 @@ function reorder_saving_list(savings::OrderedDict{Tuple{Int, Int}, Float64}, bet
     keys_list = collect(keys(savings))
     while !isempty(savings)
         position = Int(floor((log(rand()) / log(1 - beta))) % length(savings)) + 1
+
         key = keys_list[position]
         aux[key] = pop!(savings, key)
         deleteat!(keys_list, position)

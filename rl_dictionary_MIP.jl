@@ -114,7 +114,7 @@ function get_stochastic_solution_br(rl_dic::OrderedDict{Array{Int64,1}, Array{Fl
 end
 
 
-function large_simulation(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulations::Int, capacity::Float64, selected_pairs::Vector{Any})
+function large_simulation(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulations::Int, capacity::Float64, selected_pairs::Vector{Any}, variance:: Float64)
     total_reward = []
     
     n_fails_total = []
@@ -129,7 +129,7 @@ function large_simulation(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulation
             first_node = Int8(route[1])
             for next_node in route[2:end]
                 t_ij = edge_dist(edges, first_node, Int8(next_node))
-                dist += modify_value_lognormal(t_ij, t_ij*0.05)
+                dist += modify_value_lognormal(t_ij, t_ij*variance)
                 first_node = Int8(next_node)
             end
 
