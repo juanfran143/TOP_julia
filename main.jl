@@ -9,6 +9,7 @@ include("local_search_cache.jl")
 include("plot_solutions.jl")
 include("iterativeMIP.jl")
 include("algorithm.jl")
+include("local_search_destruction.jl")
 
 function main()
     raw_data = readdlm("config.txt", '\n')

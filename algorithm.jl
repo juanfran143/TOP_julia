@@ -242,7 +242,14 @@ function algo_time(txt::Dict, time::Int16)
 
         reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
         
+        # 1º LS
         routes = improveWithCache(cache, routes, edges, rl_dic, parameters)
+        
+        # 2º LS_destroyer
+        if parameters["LS_destroyer"]
+            savings = copy(original_savings)
+            routes = destruction(routes, edges, beta, savings, rl_dic, parameters)
+        end
 
         if reward > best_reward
             best_reward = reward
