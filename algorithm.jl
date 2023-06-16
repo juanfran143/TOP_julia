@@ -214,7 +214,12 @@ function algo_time(txt::Dict, time::Int16)
         # Reactive 
         "function" => antonios_function,
         "alpha_candidates" => [0.3, 0.4, 0.5, 0.6, 0.7],
-        "beta_cancidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+        "beta_cancidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
+
+        #LS Destoyer
+        "LS_destroyer" => txt["LS_destroyer"],
+        "p" => 0.2,
+        "NumIterBrInLS" => 5
         )
     edges = precalculate_distances(nodes::Dict{Int64, Node})
     list_savings_dict_alpha = Dict{Float16,OrderedDict{Tuple{Int, Int}, Float64}}()
