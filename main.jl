@@ -3,9 +3,11 @@ using DelimitedFiles
 include("structs.jl")
 include("parse.jl")
 include("get_edges.jl")
-include("simulation.jl")
-include("rl_dictionary.jl")
+include("rl_dictionary_MIP.jl")
 include("reactive_Search.jl")
+include("local_search_cache.jl")
+include("plot_solutions.jl")
+include("iterativeMIP.jl")
 include("algorithm.jl")
 
 function main()

@@ -1,9 +1,0 @@
-Instancia;num_simulations_per_merge;max_simulations_per_route;max_reliability_to_merge_routes;max_percentaje_of_distance_to_do_simulations;num_iterations_stochastic_solution;beta_stochastic_solution;det_reward;stochastic_reward
-Instances/Set_100_234/p4.2.a.txt;100;200;0.3;0.6;500;0.3;96.0;120.93780000000001
-Instances/Set_100_234/p4.2.b.txt;100;200;0.3;0.6;500;0.3;219.0;227.4796
-Instances/Set_100_234/p4.2.c.txt;100;200;0.3;0.6;500;0.3;203.0;294.9376
-Instances/Set_100_234/p4.2.d.txt;100;200;0.3;0.6;500;0.3;308.0;347.5703
-Instances/Set_100_234/p4.2.e.txt;100;200;0.3;0.6;500;0.3;261.0;410.4049
-Instances/Set_100_234/p4.2.f.txt;100;200;0.3;0.6;500;0.3;370.0;485.06690000000003
-Instances/Set_100_234/p4.2.g.txt;100;200;0.3;0.6;500;0.3;471.0;540.5688
-Instances/Set_100_234/p4.2.h.txt;100;200;0.3;0.6;500;0.3;538.0;571.8833999999999

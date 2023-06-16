@@ -1,8 +1,5 @@
 using Random, Distributions, Combinatorics, DataStructures, Dates, Plots, Base.Threads
 
-include("structs.jl")
-include("get_edges.jl")
-include("rl_dictionary.jl")
 
 
 function reorder_saving_list(savings::OrderedDict{Tuple{Int, Int}, Float64}, beta::Float16)
@@ -109,7 +106,6 @@ function destruction(sol::Vector{Route}, edges, beta, original_savings, rl_dic, 
         nRoutesDestroy = floor(Int, length(detroysol.route)*parameters["p"])
         destroysol = destroysolution(detroysol, edges, nRoutesDestroy)
         
-        #TODO Meter el 50 como parámetro
         for _ in 1:parameters["NumIterBrInLS"]
             savings = copy(original_savings)
             route = constructive_with_BR_destructive(destroysol, edges, beta, savings, rl_dic, parameters, restricted_nodes)

@@ -1,10 +1,5 @@
 using LinearAlgebra, Random
 
-include("structs.jl")
-include("parse.jl")
-include("get_edges.jl")
-include("rl_dictionary.jl")
-include("reactive_Search.jl")
 
 function obtainKey(r::Route)
     v = sort([node.id for node in r.route])
