@@ -1,7 +1,7 @@
 using Random, Distributions, Combinatorics, DataStructures, Dates, Plots, Base.Threads
 
-seed = 123
-Random.seed!(seed)
+#seed = 123
+#Random.seed!(seed)
 
 
 include("structs.jl")
@@ -311,7 +311,12 @@ function algo_time(txt::Dict, time::Int16)
 
         #Parámetros LS-destructive
         "p" =>0.2,
-        "NumIterBrInLS" => 5
+        "NumIterBrInLS" => 5,
+
+        # TO RUN
+        "LS_destroyer" => txt["LS_destroyer"]
+
+
         )
     edges = precalculate_distances(nodes::Dict{Int64, Node})
     list_savings_dict_alpha = Dict{Float16,OrderedDict{Tuple{Int, Int}, Float64}}()
@@ -342,10 +347,11 @@ function algo_time(txt::Dict, time::Int16)
         # 1º LS
         routes = improveWithCache(cache, routes, edges, rl_dic, parameters)
         
-        # 2º LS
-        savings = copy(original_savings)
-        routes = destruction(routes, edges, beta, savings, rl_dic, parameters)
-
+        # 2º LS_destroyer
+        if parameters["LS_destroyer"]
+            savings = copy(original_savings)
+            routes = destruction(routes, edges, beta, savings, rl_dic, parameters)
+        end
         if reward > best_reward
             best_reward = reward
             best_route = copy(routes)

@@ -11,7 +11,7 @@ include("algorithm.jl")
 function main()
     raw_data = readdlm("config.txt", '\n')
 
-    file = open("Output4.txt", "w")
+    file = open("Output_ComparativaLS.txt", "w")
 
     write(file, "Instancia;num_simulations_per_merge;max_simulations_per_route;max_reliability_to_merge_routes;max_percentaje_of_distance_to_do_simulations;num_iterations_stochastic_solution;beta_stochastic_solution;det_reward;stochastic_reward","\n")
     # Itera sobre cada línea en raw_data
@@ -25,7 +25,7 @@ function main()
         # Separa los datos en sus respectivos parámetros
         instance, num_simulations_per_merge, max_simulations_per_route, max_reliability_to_merge_routes, 
         max_percentaje_of_distance_to_do_simulations, num_iterations_stochastic_solution, 
-        beta_stochastic_solution, function_name, time = str_splitted
+        beta_stochastic_solution, function_name, time, LS_destroyer = str_splitted
 
         # Crea un nuevo diccionario para los parámetros de esta línea
         println(instance)
@@ -37,8 +37,10 @@ function main()
             "max_reliability_to_merge_routes" => parse(Float64, max_reliability_to_merge_routes),
             "max_percentaje_of_distance_to_do_simulations" => eval(Meta.parse(max_percentaje_of_distance_to_do_simulations)),
             "num_iterations_stochastic_solution" => parse(Int, num_iterations_stochastic_solution),
-            "beta_stochastic_solution" => parse(Float64, beta_stochastic_solution)
+            "beta_stochastic_solution" => parse(Float64, beta_stochastic_solution),
+            "LS_destroyer" => parse(Bool, LS_destroyer)
         )
+        
         det_reward, stochastic_reward = algo_time(txt, Int16(parse(Int, time)))
         write(file, txt["instance"],";",string(txt["num_simulations_per_merge"]),";",string(txt["max_simulations_per_route"]),";",
         string(txt["max_reliability_to_merge_routes"]),";",string(txt["max_percentaje_of_distance_to_do_simulations"]),";",
