@@ -174,9 +174,16 @@ function heuristic_with_BR(edges::Dict{Int8, Dict{Int8, Float64}}, beta, savings
     return get_reward_and_route(sorted_routes, parameters["n_vehicles"])
 end
 
-function antonios_function(iter)
-    # 1: exp((iter+1)/1000) 2: (iter+1)/1000, 3:1 
-    return 1#((iter+1)/1000)
+function original(iter)
+    return 1
+end
+
+function progresive(iter)
+    return (iter+1)/1000
+end
+
+function progresive_exponencial(iter)
+    return 2^(iter+1)/1000
 end
 
 function algo_time(txt::Dict, time::Int16)
@@ -206,6 +213,7 @@ function algo_time(txt::Dict, time::Int16)
 
         # Reactive 
         "function" => txt["function_name"],
+        "active_agresive" => txt["active_agresive"],
         "alpha_candidates" => [0.3, 0.4, 0.5, 0.6, 0.7],
         "beta_cancidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
 
@@ -213,7 +221,8 @@ function algo_time(txt::Dict, time::Int16)
         "LS_destroyer" => txt["LS_destroyer"],
         "p" => txt["p"],
         "NumIterBrInLS" => txt["NumIterBrInLS"]
-        )
+    )
+
     edges = precalculate_distances(nodes::Dict{Int64, Node})
     list_savings_dict_alpha = Dict{Float16,OrderedDict{Tuple{Int, Int}, Float64}}()
     for i in parameters["alpha_candidates"]
@@ -261,17 +270,11 @@ function algo_time(txt::Dict, time::Int16)
         # TODO: ¿Quieres parametrizar también estos valores? 
 
         if iter % 1000 == 999 && iter <= 5000
-            k = (iter+1)/1000
-            params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
+            k = eval(Symbol(parameters["function"]))(iter)
+            params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict, k, parameters["active_agresive"])
         end
         iter += 1
 
-
-        # if iter % 1000 == 999 && iter <= 5000
-        #     k = exce(f'{parameters["function"]}(iter)')
-        #     params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
-        # end
-        # iter += 1
     end
     
     # plot_routes(nodes,best_route)
@@ -280,7 +283,8 @@ function algo_time(txt::Dict, time::Int16)
     println("")
     rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
     println("Tamaño del Dic ", length(rl_dic_sorted) ,"\n")
-    stochastic_solution, stochastic_reward = get_stochastic_solution_br(rl_dic_sorted, parameters)
+    stochastic_solution, stochastic_reward, deterministic_solution, deterministic_reward = get_stochastic_solution_br(rl_dic_sorted, parameters)
+    plot_routes_Sto(nodes,deterministic_solution)
     plot_routes_Sto(nodes,stochastic_solution)
     stochastic_reward_large = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution, parameters["var_lognormal"])
     println("El reward estocástico es: ",stochastic_reward)
@@ -290,5 +294,5 @@ function algo_time(txt::Dict, time::Int16)
     # println("Best deterministic routes reward: ", best_route)
     # print(best_reward)
     # print(Param_dict)
-    return det_reward, stochastic_reward
+    return deterministic_reward, stochastic_reward
 end

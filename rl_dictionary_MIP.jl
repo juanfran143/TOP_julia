@@ -103,11 +103,11 @@ function get_stochastic_solution_br(rl_dic::OrderedDict{Array{Int64,1}, Array{Fl
     end
     
     stochastic_reward = [valor[1] for valor in values(rl_dic_max)]
-    best_routes, best_reward = iterative_MIP(keys(rl_dic_max),stochastic_reward, parameters["n_vehicles"])
-    best_pairs = []
+    best_routes_sto, best_reward_sto = iterative_MIP(keys(rl_dic_max),stochastic_reward, parameters["n_vehicles"])
+    best_pairs_sto = []
 
-    for route in best_routes
-        push!(best_pairs, (route, rl_dic_max[route]))
+    for route in best_routes_sto
+        push!(best_pairs_sto, (route, rl_dic_max[route]))
     end
 
     deterministic_reward = [valor[5] for valor in values(rl_dic_max)]
@@ -121,7 +121,7 @@ function get_stochastic_solution_br(rl_dic::OrderedDict{Array{Int64,1}, Array{Fl
     println("Deterministic Solution: ", best_pairs_det, "\n" )
     println("Deterministic Reward: ", best_reward_det, "\n" )
 
-    return best_pairs, best_reward
+    return best_pairs_sto, best_reward_sto, best_pairs_det, best_reward_det
 end
 
 

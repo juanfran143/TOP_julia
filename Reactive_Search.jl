@@ -28,14 +28,22 @@ end
 
 #Modify the dictionary
 
-function modify_param_dictionary_RS(Param_dict,k)
+function modify_param_dictionary_RS(Param_dict, k, active_agresive)
     #sum of all best values
     sum_q =  (sum([valor[2]^k for valor in values(Param_dict)]))
     # Refresh probabilites with RS formula and reestart best values at 0
-    for key in keys(Param_dict)
-        Param_dict[key][1] = (Param_dict[key][2]^k)/sum_q
-        # Param_dict[key][2] = 0 
+    if active_agresive 
+        for key in keys(Param_dict)
+            Param_dict[key][1] = (Param_dict[key][2]^k)/sum_q
+            Param_dict[key][2] = 0 
+        end
+    else 
+        for key in keys(Param_dict)
+            Param_dict[key][1] = (Param_dict[key][2]^k)/sum_q
+            # Param_dict[key][2] = 0 
+        end
     end
+    
     params  = collect(keys(Param_dict))
     probabilities = [valor[1] for valor in values(Param_dict)]
     no_null_index = findall(probabilities .!=0)

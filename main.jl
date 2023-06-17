@@ -30,7 +30,7 @@ function main()
 
         # Separa los datos en sus respectivos parámetros
         instance, seed, num_simulations_per_merge, max_simulations_per_route, max_reliability_to_merge_routes, 
-        max_percentaje_of_distance_to_do_simulations, function_name, time, LS_destroyer, LS_2_opt, simulations_large_simulation, variance, p, NumIterBrInLS = str_splitted
+        max_percentaje_of_distance_to_do_simulations, active_agresive, function_name, time, LS_destroyer, LS_2_opt, simulations_large_simulation, variance, p, NumIterBrInLS = str_splitted
         
         Random.seed!(parse(Int, seed))
 
@@ -44,6 +44,8 @@ function main()
             "max_simulations_per_route" => parse(Int, max_simulations_per_route),
             "max_reliability_to_merge_routes" => parse(Float64, max_reliability_to_merge_routes),
             "max_percentaje_of_distance_to_do_simulations" => eval(Meta.parse(max_percentaje_of_distance_to_do_simulations)),
+
+            "active_agresive" => parse(Bool, active_agresive),
             "function_name" => function_name,
 
             "LS_destroyer" => parse(Bool, LS_destroyer),
@@ -61,6 +63,7 @@ function main()
         det_reward, stochastic_reward = algo_time(txt, Int16(parse(Int, time)))
         println(file, txt["instance"],";", txt["seed"],";",string(txt["num_simulations_per_merge"]),";",string(txt["max_simulations_per_route"]),";",
         string(txt["max_reliability_to_merge_routes"]),";",string(txt["max_percentaje_of_distance_to_do_simulations"]),";",
+        string(txt["active_agresive"]),";",
         string(det_reward),";",string(stochastic_reward))
         close(file) 
     end  
