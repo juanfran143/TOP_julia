@@ -102,13 +102,24 @@ function get_stochastic_solution_br(rl_dic::OrderedDict{Array{Int64,1}, Array{Fl
         rl_dic_max[key] = value
     end
     
-    primeros_valores = [valor[1] for valor in values(rl_dic_max)]
-    best_routes, best_reward = iterative_MIP(keys(rl_dic_max),primeros_valores, parameters["n_vehicles"])
+    stochastic_reward = [valor[1] for valor in values(rl_dic_max)]
+    best_routes, best_reward = iterative_MIP(keys(rl_dic_max),stochastic_reward, parameters["n_vehicles"])
     best_pairs = []
 
     for route in best_routes
         push!(best_pairs, (route, rl_dic_max[route]))
     end
+
+    deterministic_reward = [valor[5] for valor in values(rl_dic_max)]
+    best_routes_det, best_reward_det = iterative_MIP(keys(rl_dic_max),deterministic_reward, parameters["n_vehicles"])
+    best_pairs_det = []
+
+    for route in best_routes_det
+        push!(best_pairs_det, (route, rl_dic_max[route]))
+    end
+
+    println("Deterministic Solution: ", best_pairs_det, "\n" )
+    println("Deterministic Reward: ", best_reward_det, "\n" )
 
     return best_pairs, best_reward
 end
@@ -118,6 +129,8 @@ function large_simulation(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulation
     total_reward = []
     
     n_fails_total = []
+     
+    println("Sctochastic solutions : ")
     for pair in selected_pairs
         println(pair)
         route = pair[1]

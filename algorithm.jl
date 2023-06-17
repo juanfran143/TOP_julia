@@ -259,14 +259,23 @@ function algo_time(txt::Dict, time::Int16)
         end
         
         # TODO: ¿Quieres parametrizar también estos valores? 
+
         if iter % 1000 == 999 && iter <= 5000
-            k = exce(f'{parameters["function"]}(iter)')
+            k = (iter+1)/1000
             params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
         end
         iter += 1
+
+
+        # if iter % 1000 == 999 && iter <= 5000
+        #     k = exce(f'{parameters["function"]}(iter)')
+        #     params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict,k)
+        # end
+        # iter += 1
     end
     
-    plot_routes(nodes,best_route)
+    # plot_routes(nodes,best_route)
+
     println("Número de iteraciones: ", iter)
     println("")
     rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
@@ -279,7 +288,7 @@ function algo_time(txt::Dict, time::Int16)
 
     det_reward = sum(i.reward for i in best_route)
     # println("Best deterministic routes reward: ", best_route)
-    print(best_reward)
+    # print(best_reward)
     # print(Param_dict)
     return det_reward, stochastic_reward
 end
