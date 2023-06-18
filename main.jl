@@ -63,9 +63,13 @@ function main()
         det_reward, stochastic_reward = algo_time(txt, Int16(parse(Int, time)))
         println(file, txt["instance"],";", txt["seed"],";",string(txt["num_simulations_per_merge"]),";",string(txt["max_simulations_per_route"]),";",
         string(txt["max_reliability_to_merge_routes"]),";",string(txt["max_percentaje_of_distance_to_do_simulations"]),";",
-        string(txt["active_agresive"]),";",
+        string(txt["active_agresive"]),";",string(txt["function_name"]),";",string(time),";",string(txt["LS_destroyer"]),";",
+        string(txt["LS_2_opt"]),";",string(txt["simulations_large_simulation"]),";",string(txt["variance"]),";",
+        string(txt["p"]),";",string(txt["NumIterBrInLS"]),";",
         string(det_reward),";",string(stochastic_reward))
         close(file) 
+        # Instance function time LS_Destroyer LS_2_opt simulations_large_simulation variance p NumIterBrInLS
+# Instances/Set_102_234/p7.4.n.txt 123456 100 200 0.3 4/5 true original 100 true true 1000 0.05 0.2 5
     end  
 end
 

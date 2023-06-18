@@ -214,7 +214,7 @@ function algo_time(txt::Dict, time::Int16)
         # Reactive 
         "function" => txt["function_name"],
         "active_agresive" => txt["active_agresive"],
-        "alpha_candidates" => [0.3, 0.4, 0.5, 0.6, 0.7],
+        "alpha_candidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
         "beta_cancidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
 
         #LS Destoyer
@@ -290,9 +290,5 @@ function algo_time(txt::Dict, time::Int16)
     println("El reward estocástico es: ",stochastic_reward)
     println("El reward real es: ", stochastic_reward_large)
 
-    det_reward = sum(i.reward for i in best_route)
-    # println("Best deterministic routes reward: ", best_route)
-    # print(best_reward)
-    # print(Param_dict)
-    return deterministic_reward, stochastic_reward
+    return deterministic_reward, stochastic_reward_large
 end
