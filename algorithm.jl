@@ -290,5 +290,5 @@ function algo_time(txt::Dict, time::Int16)
     # println("El reward estocástico es: ",stochastic_reward)
     # println("El reward real es: ", stochastic_reward_large)
 
-    return deterministic_reward, stochastic_reward_large,reliability
+    return deterministic_reward, stochastic_reward_large, reliability, length(rl_dic_sorted), iter
 end

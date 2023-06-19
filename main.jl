@@ -60,12 +60,12 @@ function main()
 
         )
         
-        det_reward, stochastic_reward, reliability = algo_time(txt, Int16(parse(Int, time)))
+        det_reward, stochastic_reward, reliability, num_dict, iter = algo_time(txt, Int16(parse(Int, time)))
         println(file, txt["instance"],";", txt["seed"],";",string(txt["num_simulations_per_merge"]),";",string(txt["max_simulations_per_route"]),";",
         string(txt["max_reliability_to_merge_routes"]),";",string(txt["max_percentaje_of_distance_to_do_simulations"]),";",
         string(txt["active_agresive"]),";",string(txt["function_name"]),";",string(time),";",string(txt["LS_destroyer"]),";",
         string(txt["LS_2_opt"]),";",string(txt["simulations_large_simulation"]),";",string(txt["variance"]),";",
-        string(txt["p"]),";",string(txt["NumIterBrInLS"]),";",
+        string(txt["p"]),";",string(txt["NumIterBrInLS"]),";",string(num_dict),";",string(iter),";",
         string(det_reward),";",string(stochastic_reward),";",string(reliability))
         close(file) 
         # Instance function time LS_Destroyer LS_2_opt simulations_large_simulation variance p NumIterBrInLS
