@@ -1,2 +1,2 @@
 Instancia;seed;num_simulations_per_merge;max_simulations_per_route;max_reliability_to_merge_routes;max_percentaje_of_distance_to_do_simulations;det_reward;stochastic_reward
-Instances/Set_66_234/p5.2.b.txt;123456;1000;2000;0.3;0.8;true;original;2;false;true;1000;0.05;0.2;5;20.0;18.71
+Instances/Set_66_234/p5.2.b.txt;123456;1000;2000;0.3;0.8;true;original;2;false;true;1000;0.05;0.2;5;20.0;18.85;0.9425

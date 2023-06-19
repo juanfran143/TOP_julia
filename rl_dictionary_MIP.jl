@@ -122,8 +122,8 @@ function get_stochastic_solution_br(rl_dic::OrderedDict{Array{Int64,1}, Array{Fl
         push!(best_pairs_det, (route, rl_dic_max[route]))
     end
 
-    println("Deterministic Solution: ", best_pairs_det, "\n" )
-    println("Deterministic Reward: ", best_reward_det, "\n" )
+    # println("Deterministic Solution: ", best_pairs_det, "\n" )
+    # println("Deterministic Reward: ", best_reward_det, "\n" )
 
     return best_pairs_sto, best_reward_sto, best_pairs_det, best_reward_det
 end
@@ -134,9 +134,9 @@ function large_simulation(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulation
     
     n_fails_total = []
      
-    println("Sctochastic solutions : ")
+    # println("Sctochastic solutions : ")
     for pair in selected_pairs
-        println(pair)
+        # println(pair)
         route = pair[1]
 
         avg_reward = []
@@ -162,8 +162,8 @@ function large_simulation(edges::Dict{Int8, Dict{Int8, Float64}}, num_simulation
         push!(n_fails_total, n_fails)
     end
     # reliability
-    println("reliability: ", 1-mean(n_fails_total)/num_simulations)
-    return sum(total_reward)
+    # println("reliability: ", 1-mean(n_fails_total)/num_simulations)
+    return sum(total_reward), 1-mean(n_fails_total)/num_simulations
 end
 
 function get_stochastic_solution_greedy(rl_dic::OrderedDict{Array{Int64,1}, Array{Float64,1}}, n_vehicles::Int64)

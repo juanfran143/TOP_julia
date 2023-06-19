@@ -139,7 +139,7 @@ function reorder_saving_list(savings::OrderedDict{Tuple{Int, Int}, Float64}, bet
     keys_list = collect(keys(savings))
     while !isempty(savings)
         position = Int(floor((log(rand()) / log(1 - beta))) % length(savings)) + 1
-        print(position)
+        # print(position)
         key = keys_list[position]
         aux[key] = pop!(savings, key)
         deleteat!(keys_list, position)
@@ -279,16 +279,16 @@ function algo_time(txt::Dict, time::Int16)
     
     # plot_routes(nodes,best_route)
 
-    println("Número de iteraciones: ", iter)
-    println("")
+    # println("Número de iteraciones: ", iter)
+    # println("")
     rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
-    println("Tamaño del Dic ", length(rl_dic_sorted) ,"\n")
+    # println("Tamaño del Dic ", length(rl_dic_sorted) ,"\n")
     stochastic_solution, stochastic_reward, deterministic_solution, deterministic_reward = get_stochastic_solution_br(rl_dic_sorted, parameters)
-    plot_routes_Sto(nodes,deterministic_solution)
-    plot_routes_Sto(nodes,stochastic_solution)
-    stochastic_reward_large = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution, parameters["var_lognormal"])
-    println("El reward estocástico es: ",stochastic_reward)
-    println("El reward real es: ", stochastic_reward_large)
+    # plot_routes_Sto(nodes,deterministic_solution)
+    # plot_routes_Sto(nodes,stochastic_solution)
+    stochastic_reward_large, reliability = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution, parameters["var_lognormal"])
+    # println("El reward estocástico es: ",stochastic_reward)
+    # println("El reward real es: ", stochastic_reward_large)
 
-    return deterministic_reward, stochastic_reward_large
+    return deterministic_reward, stochastic_reward_large,reliability
 end
