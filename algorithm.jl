@@ -218,6 +218,7 @@ function algo_time(txt::Dict, time::Int16)
         "beta_cancidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
 
         #LS Destoyer
+        "LS_2_opt" => txt["LS_2_opt"],
         "LS_destroyer" => txt["LS_destroyer"],
         "p" => txt["p"],
         "NumIterBrInLS" => txt["NumIterBrInLS"]
@@ -248,10 +249,12 @@ function algo_time(txt::Dict, time::Int16)
         savings = copy(original_savings)
 
         reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
-        
+
         # 1º LS
-        routes = improveWithCache(cache, routes, edges, rl_dic, parameters)
-        
+        if parameters["LS_2_opt"]
+            routes = improveWithCache(cache, routes, edges, rl_dic, parameters)
+        end
+
         # 2º LS_destroyer
         if parameters["LS_destroyer"]
             savings = copy(original_savings)
@@ -274,7 +277,6 @@ function algo_time(txt::Dict, time::Int16)
             params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict, k, parameters["active_agresive"])
         end
         iter += 1
-
     end
     
     # plot_routes(nodes,best_route)
@@ -285,7 +287,7 @@ function algo_time(txt::Dict, time::Int16)
     # println("Tamaño del Dic ", length(rl_dic_sorted) ,"\n")
     stochastic_solution, stochastic_reward, deterministic_solution, deterministic_reward = get_stochastic_solution_br(rl_dic_sorted, parameters)
     # plot_routes_Sto(nodes,deterministic_solution)
-    # plot_routes_Sto(nodes,stochastic_solution)
+    plot_routes_Sto(nodes,stochastic_solution)
     stochastic_reward_large, reliability = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution, parameters["var_lognormal"])
     # println("El reward estocástico es: ",stochastic_reward)
     # println("El reward real es: ", stochastic_reward_large)
