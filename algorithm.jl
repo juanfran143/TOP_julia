@@ -208,6 +208,9 @@ function algo_time(txt::Dict, time::Int16)
         "active_agresive" => txt["active_agresive"],
         "alpha_candidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
         "beta_cancidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
+        
+        #LS_2_opt
+        "LS_2_opt" => txt["LS_2_opt"],
 
         #LS Destoyer
         "LS_destroyer" => txt["LS_destroyer"],
@@ -230,9 +233,7 @@ function algo_time(txt::Dict, time::Int16)
     duration_senconds = time
     iter = 1
     start_time = now()
-    first = true
-    while now()-start_time<Second(duration_senconds) || first
-        first = false
+    while now()-start_time<Second(duration_senconds) 
 
         (alpha,beta) = choose_with_probability(params,no_null_index, cum_probabilities)
 
@@ -243,11 +244,9 @@ function algo_time(txt::Dict, time::Int16)
         reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
         
         # 1º LS
-        println(rl_dic)
-        println(length(rl_dic))
-        routes = improveWithCache(cache, routes, edges, rl_dic, parameters)
-        print(rl_dic)
-        println(length(rl_dic))
+        if parameters["LS_2_opt"]
+            routes = improveWithCache(cache, routes, edges, rl_dic, parameters)
+        end
         
         # 2º LS_destroyer
         if parameters["LS_destroyer"]
@@ -282,7 +281,7 @@ function algo_time(txt::Dict, time::Int16)
     # println("Tamaño del Dic ", length(rl_dic_sorted) ,"\n")
     stochastic_solution, stochastic_reward, deterministic_solution, deterministic_reward = get_stochastic_solution_br(rl_dic_sorted, parameters)
     # plot_routes_Sto(nodes,deterministic_solution)
-    # plot_routes_Sto(nodes,stochastic_solution)
+    plot_routes_Sto(nodes,stochastic_solution)
     stochastic_reward_large, reliability = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution, parameters["var_lognormal"])
     # println("El reward estocástico es: ",stochastic_reward)
     # println("El reward real es: ", stochastic_reward_large)
