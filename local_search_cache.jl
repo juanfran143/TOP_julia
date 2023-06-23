@@ -55,8 +55,11 @@ function improveWithCache(cache::Dict, newSol, edges, rl_dic, parameters)
     n = length(newSol)
     for i in 1:n
         route = newSol[i]
+        println("Old route", route)
         route, improve = improveNodesOrder(route, edges)
         if improve
+            println("New route: ", route)
+            println("")
             new_route = [i.id for i in route.route]
             reward_input, n_simulations_completed, fails_input = update_dict(edges, rl_dic, new_route, route.reward, parameters)
             rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, route.dist, route.reward]

@@ -1,13 +1,5 @@
 using Random, Distributions, Combinatorics, DataStructures, Dates, Plots, Base.Threads, JuMP,GLPK
 
-include("structs.jl")
-include("parse.jl")
-include("get_edges.jl")
-include("rl_dictionary_MIP.jl")
-include("reactive_Search.jl")
-include("local_search_cache.jl")
-include("plot_solutions.jl")
-include("iterativeMIP.jl")
 
 function dummy_solution(nodes::Dict{Int, Node}, edges::Dict{Int8, Dict{Int8, Float64}}, capacity, last_node)
     routes = Dict{Int, Route}()
@@ -238,8 +230,9 @@ function algo_time(txt::Dict, time::Int16)
     duration_senconds = time
     iter = 1
     start_time = now()
-
-    while now()-start_time<Second(duration_senconds)
+    first = true
+    while now()-start_time<Second(duration_senconds) || first
+        first = false
 
         (alpha,beta) = choose_with_probability(params,no_null_index, cum_probabilities)
 
@@ -250,7 +243,11 @@ function algo_time(txt::Dict, time::Int16)
         reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
         
         # 1º LS
+        println(rl_dic)
+        println(length(rl_dic))
         routes = improveWithCache(cache, routes, edges, rl_dic, parameters)
+        print(rl_dic)
+        println(length(rl_dic))
         
         # 2º LS_destroyer
         if parameters["LS_destroyer"]
