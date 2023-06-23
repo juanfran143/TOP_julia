@@ -3,9 +3,11 @@ using Random, Distributions, Combinatorics, DataStructures, Distributed, Base.Th
 # addprocs(4)
 
 function modify_value_lognormal(mean::Float64, variance::Float64)
-    mu = log(mean^2 / sqrt(mean^2 + variance))
-    sigma = sqrt(log(1 + (variance / mean^2)))
-    lognormal_dist = LogNormal(mu, sigma)
+    # print(" MEAN: ",mean," VAR: ",variance)
+    mu = log(mean) - 0.5 * log(1 + variance / mean^2)
+    sigma_sq = log(1 + variance / mean^2)
+    lognormal_dist = LogNormal(mu, sqrt(sigma_sq))
+    # print(" MEAN: ",mean, "ESTIMACION: ", rand(lognormal_dist))
     return rand(lognormal_dist)
 end
 

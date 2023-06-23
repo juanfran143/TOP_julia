@@ -72,8 +72,8 @@ function plot_routes_Sto(nodes,routes)
     end
     display(p)
     for i in 1:length(list_x)
-        annotate!(p,list_x[i],list_y[i] + 0.2, text(string(rewards[i]) ))
-        # annotate!(p,list_x[i],list_y[i] + 0.2, text(string(ids[i]) ))
+        # annotate!(p,list_x[i],list_y[i] + 0.2, text(string(rewards[i]) ))
+        annotate!(p,list_x[i],list_y[i] + 0.2, text(string(ids[i]) ))
     end
     display(p)
 end

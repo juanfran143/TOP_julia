@@ -241,42 +241,46 @@ function algo_time(txt::Dict, time::Int16)
     start_time = now()
 
     while now()-start_time<Second(duration_senconds)
+        if iter<2
+            (alpha,beta) = choose_with_probability(params,no_null_index, cum_probabilities)
 
-        (alpha,beta) = choose_with_probability(params,no_null_index, cum_probabilities)
+            original_savings=list_savings_dict_alpha[alpha]
 
-        original_savings=list_savings_dict_alpha[alpha]
-
-        savings = copy(original_savings)
-
-        reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
-
-        # 1º LS
-        if parameters["LS_2_opt"]
-            routes = improveWithCache(cache, routes, edges, rl_dic, parameters)
-        end
-
-        # 2º LS_destroyer
-        if parameters["LS_destroyer"]
             savings = copy(original_savings)
-            routes = destruction(routes, edges, beta, savings, rl_dic, parameters)
-        end
 
-        if reward > best_reward
-            best_reward = reward
-            best_route = copy(routes)
-        end
+            reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
+
+            println(rl_dic)
+            # 1º LS
+            if parameters["LS_2_opt"]
+                routes = improveWithCache(cache, routes, edges, rl_dic, parameters)
+            end
+
+            println(rl_dic)
+
+            # 2º LS_destroyer
+            if parameters["LS_destroyer"]
+                savings = copy(original_savings)
+                routes = destruction(routes, edges, beta, savings, rl_dic, parameters)
+            end
+
+            if reward > best_reward
+                best_reward = reward
+                best_route = copy(routes)
+            end
+                
+            if reward > Param_dict[(alpha,beta)][2] && iter <= 5000
+                Param_dict[(alpha,beta)][2]=reward
+            end
             
-        if reward > Param_dict[(alpha,beta)][2] && iter <= 5000
-            Param_dict[(alpha,beta)][2]=reward
-        end
-        
-        # TODO: ¿Quieres parametrizar también estos valores? 
+            # TODO: ¿Quieres parametrizar también estos valores? 
 
-        if iter % 1000 == 999 && iter <= 5000
-            k = eval(Symbol(parameters["function"]))(iter)
-            params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict, k, parameters["active_agresive"])
+            if iter % 1000 == 999 && iter <= 5000
+                k = eval(Symbol(parameters["function"]))(iter)
+                params,no_null_index,cum_probabilities =  modify_param_dictionary_RS(Param_dict, k, parameters["active_agresive"])
+            end
+            iter += 1
         end
-        iter += 1
     end
     
     # plot_routes(nodes,best_route)
@@ -286,7 +290,7 @@ function algo_time(txt::Dict, time::Int16)
     rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))
     # println("Tamaño del Dic ", length(rl_dic_sorted) ,"\n")
     stochastic_solution, stochastic_reward, deterministic_solution, deterministic_reward = get_stochastic_solution_br(rl_dic_sorted, parameters)
-    # plot_routes_Sto(nodes,deterministic_solution)
+    plot_routes_Sto(nodes,deterministic_solution)
     plot_routes_Sto(nodes,stochastic_solution)
     stochastic_reward_large, reliability = large_simulation(edges, parameters["large_simulation_simulations"], parameters["capacity"], stochastic_solution, parameters["var_lognormal"])
     # println("El reward estocástico es: ",stochastic_reward)
