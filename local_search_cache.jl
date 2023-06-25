@@ -100,10 +100,17 @@ function improveWithCache_2_3opt(cache::Dict, newSol, edges, rl_dic, parameters)
         route, improve_2opt = improveNodesOrder_2opt(route, edges)
         route, improve_3opt = improveNodesOrder_3opt(route, edges)
         improve = improve_2opt || improve_3opt
-        if improve && route.dist > parameters["capacity"]*parameters["max_percentaje_of_distance_to_do_simulations"]
+        if improve && route.reward > parameters["best_det"]*parameters["max_percentaje_of_distance_to_do_simulations"]
             new_route = [i.id for i in route.route]
             reward_input, n_simulations_completed, fails_input = update_dict(edges, rl_dic, new_route, route.reward, parameters)
-            rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, route.dist, route.reward]
+
+            if reward_input >= parameters["best_sto"]*parameters["max_percentaje_of_distance_to_do_simulations"]
+                if reward_input > parameters["best_sto"]
+                    parameters["best_sto"] = reward_input
+                    parameters["best_det"] = merged_route_reward
+                end
+                rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, route.dist, route.reward]
+            end
         end
         skey = obtainKey(route)
 

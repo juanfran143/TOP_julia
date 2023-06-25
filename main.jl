@@ -12,7 +12,7 @@ include("algorithm.jl")
 include("local_search_destruction.jl")
 
 function main()
-    name_output = "Output.txt"
+    name_output = "Output_v2.txt"
     raw_data = readdlm("config.txt", '\n')
 
     file = open(name_output, "w")
@@ -66,7 +66,7 @@ function main()
         string(txt["active_agresive"]),";",string(txt["function_name"]),";",string(time),";",string(txt["LS_destroyer"]),";",
         string(txt["LS_2_opt"]),";",string(txt["simulations_large_simulation"]),";",string(txt["variance"]),";",
         string(txt["p"]),";",string(txt["NumIterBrInLS"]),";",string(num_dict),";",string(iter),";",
-        string(det_reward),";",string(stochastic_reward),";",string(reliability))
+        string(det_reward),";",string(round(stochastic_reward,2)),";",string(round(reliability,2)))
         close(file) 
         # Instance function time LS_Destroyer LS_2_opt simulations_large_simulation variance p NumIterBrInLS
 # Instances/Set_102_234/p7.4.n.txt 123456 100 200 0.3 4/5 true original 100 true true 1000 0.05 0.2 5

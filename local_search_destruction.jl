@@ -45,10 +45,15 @@ function add_routes(Node2::Node, edges::Dict{Int8, Dict{Int8, Float64}}, route, 
             merged_route_reward = route.reward + Node2.reward
             route = Route(merged_route_nodes, merged_route_distance, merged_route_reward)
                 
-            if merged_route_distance >= parameters["capacity"]*parameters["max_percentaje_of_distance_to_do_simulations"]
+            if merged_route_reward >= parameters["best_det"]*parameters["max_percentaje_of_distance_to_do_simulations"]
                 reward_input, n_simulations_completed, fails_input = update_dict(edges, rl_dic, new_route, merged_route_reward, parameters)
-
-                rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, merged_route_distance, merged_route_reward]
+                if reward_input >= parameters["best_sto"]*parameters["max_percentaje_of_distance_to_do_simulations"]
+                    if reward_input > parameters["best_sto"]
+                        parameters["best_sto"] = reward_input
+                        parameters["best_det"] = merged_route_reward
+                    end
+                    rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, merged_route_distance, merged_route_reward]
+                end 
             end
             return route, true
         end

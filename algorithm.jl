@@ -114,10 +114,16 @@ function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Flo
 
                 #Algoritmo Juanfran y Antonio contienen el siguiente cacho de código en común
                 
-                if merged_route_distance >= parameters["capacity"]*parameters["max_percentaje_of_distance_to_do_simulations"]
+                if merged_route_reward >= parameters["best_det"]*parameters["max_percentaje_of_distance_to_do_simulations"]
                     reward_input, n_simulations_completed, fails_input = update_dict(edges, rl_dic, new_route, merged_route_reward, parameters)
-
-                    rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, merged_route_distance, merged_route_reward]
+                    #println("Sto: ", reward_input)
+                    if reward_input >= parameters["best_sto"]*parameters["max_percentaje_of_distance_to_do_simulations"]
+                        if reward_input > parameters["best_sto"]
+                            parameters["best_sto"] = reward_input
+                            parameters["best_det"] = merged_route_reward
+                        end
+                        rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, merged_route_distance, merged_route_reward]
+                    end
                 end
             end
         end
@@ -215,7 +221,11 @@ function algo_time(txt::Dict, time::Int16)
         #LS Destoyer
         "LS_destroyer" => txt["LS_destroyer"],
         "p" => txt["p"],
-        "NumIterBrInLS" => txt["NumIterBrInLS"]
+        "NumIterBrInLS" => txt["NumIterBrInLS"],
+
+        #Sto
+        "best_sto" => 0,
+        "best_det" => 0
     )
 
     edges = precalculate_distances(nodes::Dict{Int64, Node})
