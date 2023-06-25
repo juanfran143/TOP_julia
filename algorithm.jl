@@ -243,9 +243,9 @@ function algo_time(txt::Dict, time::Int16)
 
         reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
         
-        # 1º LS
+        # 1º LS 2 y 3-opt
         if parameters["LS_2_opt"]
-            routes = improveWithCache(cache, routes, edges, rl_dic, parameters)
+            routes = improveWithCache_2_3opt(cache, routes, edges, rl_dic, parameters)
         end
         
         # 2º LS_destroyer

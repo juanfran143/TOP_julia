@@ -1,6 +1,6 @@
 using Random, Distributions, Combinatorics, DataStructures, Distributed, Base.Threads
 
-addprocs(8)
+addprocs(2)
 
 function modify_value_lognormal(mean::Float64, variance::Float64)
     mu = log(mean^2 / sqrt(mean^2 + variance))
