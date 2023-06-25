@@ -53,6 +53,9 @@ function inserction(sol::Vector{Route}, edges, beta, original_savings, rl_dic, p
         for _ in 1:parameters["NumIterBrInLS"]
             #savings = copy(original_savings)
             inserction_savings = insertion_savings(destroysol, parameters)
+            inserction_savings = sort(collect(inserction_savings), by = x -> x[2], rev = true)
+            inserction_savings = OrderedDict(kv[1] => kv[2] for kv in inserction_savings)
+            
             #route = constructive_with_BR_destructive(destroysol, edges, beta, savings, rl_dic, parameters, restricted_nodes)
             if best_sol.reward < route.reward
                 best_sol = deepcopy(route)
