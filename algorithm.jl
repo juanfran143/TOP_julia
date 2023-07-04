@@ -206,7 +206,7 @@ function algo_time(txt::Dict, time::Int16)
         # Reactive 
         "function" => txt["function_name"],
         "active_agresive" => txt["active_agresive"],
-        "alpha_candidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+        "alpha_candidates" => [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
         "beta_cancidates" => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
         
         #LS_2_opt
