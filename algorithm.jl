@@ -74,7 +74,7 @@ function calculate_savings_dict_vecinos(nodes::Dict{Int, Node}, edges::Dict{Int8
 end
 
 function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Float64}}, routes::Dict{Int, Route}, max_distance::Float64, 
-    rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, parameters)
+    rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, parameters, dict_threshole)
     route1 = routes[Node1.route_id]
     route2 = routes[Node2.route_id]
 
@@ -114,17 +114,33 @@ function merge_routes(Node1::Node, Node2::Node, edges::Dict{Int8, Dict{Int8, Flo
 
                 #Algoritmo Juanfran y Antonio contienen el siguiente cacho de código en común
                 
-                if merged_route_reward >= parameters["best_det"]*parameters["max_percentaje_of_distance_to_do_simulations"]
-                    reward_input, n_simulations_completed, fails_input = update_dict(edges, rl_dic, new_route, merged_route_reward, parameters)
-                    #println("Sto: ", reward_input)
-                    if reward_input >= parameters["best_sto"]*parameters["max_percentaje_of_distance_to_do_simulations"]
-                        if reward_input > parameters["best_sto"]
-                            parameters["best_sto"] = reward_input
-                            parameters["best_det"] = merged_route_reward
-                        end
+                if dict_threshole != 0 
+                    if merged_route_reward >= dict_threshole*parameters["max_percentaje_of_distance_to_do_simulations"]
+                        reward_input, n_simulations_completed, fails_input = update_dict(edges, rl_dic, new_route, merged_route_reward, parameters)
                         rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, merged_route_distance, merged_route_reward]
                     end
+                else
+                    reward_input, n_simulations_completed, fails_input = update_dict(edges, rl_dic, new_route, merged_route_reward, parameters)
+                    rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, merged_route_distance, merged_route_reward]
                 end
+
+                # reward_input, n_simulations_completed, fails_input = update_dict(edges, rl_dic, new_route, merged_route_reward, parameters)
+                # rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, merged_route_distance, merged_route_reward]
+
+
+
+
+                # if merged_route_reward >= parameters["best_det"]*parameters["max_percentaje_of_distance_to_do_simulations"]
+                #     reward_input, n_simulations_completed, fails_input = update_dict(edges, rl_dic, new_route, merged_route_reward, parameters)
+                #     #println("Sto: ", reward_input)
+                #     if reward_input >= parameters["best_sto"]*parameters["max_percentaje_of_distance_to_do_simulations"]
+                #         if reward_input > parameters["best_sto"]
+                #             parameters["best_sto"] = reward_input
+                #             parameters["best_det"] = merged_route_reward
+                #         end
+                #         rl_dic[new_route] = [reward_input, n_simulations_completed, fails_input, merged_route_distance, merged_route_reward]
+                #     end
+                # end
             end
         end
         
@@ -156,14 +172,14 @@ function get_reward_and_route(sorted_routes::Dict{Int64, Route}, n_vehicles::Int
     return (reward, routes)
 end
 
-function heuristic_with_BR(edges::Dict{Int8, Dict{Int8, Float64}}, beta, savings, rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, parameters)
+function heuristic_with_BR(edges::Dict{Int8, Dict{Int8, Float64}}, beta, savings, rl_dic::Dict{Array{Int64,1}, Array{Float64,1}}, parameters, dict_threshole)
     routes = dummy_solution(parameters["nodes"], edges, parameters["capacity"], parameters["last_node"])
     savings = reorder_saving_list(savings, beta)
     for key in keys(savings)
         if haskey(parameters["nodes"], key[1]) && haskey(parameters["nodes"], key[2])
             NodeX = parameters["nodes"][key[1]]
             NodeY = parameters["nodes"][key[2]]
-            merge_routes(NodeX, NodeY, edges, routes, parameters["capacity"], rl_dic, parameters)
+            merge_routes(NodeX, NodeY, edges, routes, parameters["capacity"], rl_dic, parameters, dict_threshole)
         end
     end
     sorted_routes = sort(collect(routes), by = x -> x[2].reward, rev = true)
@@ -242,6 +258,7 @@ function algo_time(txt::Dict, time::Int16)
 
     duration_senconds = time
     iter = 1
+    dict_threshole = 0
     start_time = now()
     while now()-start_time<Second(duration_senconds) 
 
@@ -251,7 +268,7 @@ function algo_time(txt::Dict, time::Int16)
 
         savings = copy(original_savings)
 
-        reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters)
+        reward, routes = heuristic_with_BR(edges, beta, savings, rl_dic, parameters, dict_threshole)
         
         # 1º LS 2 y 3-opt
         if parameters["LS_2_opt"]
@@ -268,7 +285,15 @@ function algo_time(txt::Dict, time::Int16)
             best_reward = reward
             best_route = copy(routes)
         end
-            
+
+        #Threshole for dict
+        if iter == 10
+            deterministic_rewards = [valor[5] for valor in values(rl_dic)]
+            dict_threshole = best_n_reward_MIP(keys(rl_dic),deterministic_rewards, parameters["n_vehicles"])
+            println(dict_threshole)
+        end
+
+        # Reactive Search condition    
         if reward > Param_dict[(alpha,beta)][2] && iter <= 5000
             Param_dict[(alpha,beta)][2]=reward
         end
@@ -285,6 +310,7 @@ function algo_time(txt::Dict, time::Int16)
     
     # plot_routes(nodes,best_route)
 
+    println(length(rl_dic))
     # println("Número de iteraciones: ", iter)
     # println("")
     rl_dic_sorted = OrderedDict(sort(collect(rl_dic), by = x -> x[2][1], rev = true))

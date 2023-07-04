@@ -1,5 +1,2 @@
 # Instance num_simulations_per_merge max_simulations_per_route max_reliability_to_merge_routes max_percentaje_of_distance_to_do_simulations active_agresive function time LS_Destroyer LS_2_opt simulations_large_simulation variance p NumIterBrInLS
-Instances/Set_64_234/p6.4.k.txt 1238112 500 1000 0.7 9/10 false progresive 60 true true 1000 0.75 0.2 1
-Instances/Set_64_234/p6.4.k.txt 1238123 500 1000 0.7 9/10 false progresive 60 true true 1000 0.75 0.2 1
-Instances/Set_64_234/p6.4.k.txt 1238134 500 1000 0.7 9/10 false progresive 60 true true 1000 0.75 0.2 1
-Instances/Set_64_234/p6.4.k.txt 1238145 500 1000 0.7 9/10 false progresive 60 true true 1000 0.75 0.2 1
+Instances/Set_64_234/p6.4.n.txt 12381122 500 1000 0.7 9/10 false progresive 30 true true 1000 0.75 0.2 1
