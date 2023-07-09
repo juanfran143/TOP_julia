@@ -10,6 +10,7 @@ include("plot_solutions.jl")
 include("iterativeMIP.jl")
 include("algorithm.jl")
 include("local_search_destruction.jl")
+include("local_search_insertion.jl")
 
 function main()
     name_output = "Output.txt"

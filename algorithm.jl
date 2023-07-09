@@ -254,6 +254,9 @@ function algo_time(txt::Dict, time::Int16)
             routes = destruction(routes, edges, beta, savings, rl_dic, parameters)
         end
 
+        # 3º LS_Insertion
+        routes = inserction(routes, edges, beta, rl_dic, parameters)
+
         if reward > best_reward
             best_reward = reward
             best_route = copy(routes)
